@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env
+.env.*
+
+# Output files
+diff.txt
+pr-description.md
+
+# Logs and OS files
+*.log
+.DS_Store
+
+# Backup files
+*~
+*.swp
+*.bak
+
+# VSCode / Cursor
+.vscode/
+.history/
+
+# Python egg
+*.egg-info/
+dist/
+build/
+
+# Mac archive files
+*.zip
+*.dmg
+*.tar.gz
