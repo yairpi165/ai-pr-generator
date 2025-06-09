@@ -11,28 +11,61 @@ load_dotenv()
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
 model = genai.GenerativeModel("gemini-2.0-flash")
 
-# Load the diff
+# Load git diff
 with open(diff_path, "r") as file:
     diff = file.read()
 
-# Load optional variables
-pr_type = os.getenv("PR_TYPE", "feature").capitalize()
-pr_title = os.getenv("PR_TITLE")
+# Load PR metadata
+pr_type = os.getenv("PR_TYPE", "feature").lower()
+pr_title_raw = os.getenv("PR_TITLE", "").strip()
 
-# Prepare prompt based on title presence
-if pr_title:
-    prompt = f"""
-You're a senior software engineer writing a pull request description for Bitbucket.
+ticket = ""
+title = ""
+use_ai_title = False
 
-The PR type is: **{pr_type}**
-The title of the PR is: **{pr_title}**
+# Parse PR title
+if ":" in pr_title_raw:
+    parts = pr_title_raw.split(":", 1)
+    ticket = parts[0].strip()
+    title = parts[1].strip()
+elif pr_title_raw:
+    if " " in pr_title_raw:
+        title = pr_title_raw
+    else:
+        ticket = pr_title_raw
 
-Please generate a professional PR description in **Markdown format** using the following sections:
+# If title is missing, use AI to generate one (even if ticket is empty)
+if not title:
+    use_ai_title = True
+    title = "AI-generated title"
 
-# {pr_title}
+# Generate AI title if needed
+if use_ai_title:
+    title_prompt = f"""
+You're a senior software engineer writing a Bitbucket pull request.
+
+Based on this git diff, generate a short, descriptive PR title in sentence case.
+Do NOT include any punctuation or markdown — just return the title text.
+
+Git diff:
+{diff}
+"""
+    title_response = model.generate_content(title_prompt)
+    title = title_response.text.strip().strip('"').strip()
+
+# Build title string
+ticket_prefix = f"({ticket})" if ticket else ""
+formatted_title = f"{pr_type}{ticket_prefix}: {title}".strip(": ").strip()
+
+# Construct prompt (AI generates only the body)
+prompt = f"""
+You're a senior software engineer writing a Bitbucket pull request description.
+
+Please generate a professional **Markdown** PR description only — no title.
+
+Use this structure:
 
 ## 🧠 Summary
 ## ✅ Changes
@@ -42,41 +75,25 @@ Use the following git diff as input:
 
 {diff}
 
-Please return only the raw Markdown content, without wrapping it in triple backticks.
-"""
-else:
-    prompt = f"""
-You're a senior software engineer writing a pull request description for Bitbucket.
-
-The PR type is: **{pr_type}**
-
-Please come up with a professional and concise PR title based on the diff and generate a full PR description in **Markdown format** using the following sections:
-
-# <Generated Title>
-
-## 🧠 Summary
-## ✅ Changes
-## 🔍 Context
-
-Use the following git diff as input:
-
-{diff}
-
-Please return only the raw Markdown content, including the title as an H1 heading (#).
+Do not include any title or triple backticks. Only return the description body.
 """
 
-# Generate response
+# Generate description from Gemini
 response = model.generate_content(prompt)
-pr_description = response.text.strip()
+pr_body = response.text.strip()
+
+# Final output with our controlled title
+full_description = f"# 🔖 title: {formatted_title}\n\n{pr_body}"
+
 
 # Print result
 print("\n--- ✨ Generated PR Description ---\n")
-print(pr_description)
+print(full_description)
 print("\n-----------------------------------\n")
 
-# Save to pr-description.md
+# Save to file
 md_output_path = os.path.join(base_dir, "pr-description.md")
 with open(md_output_path, "w") as f:
-    f.write(pr_description)
+    f.write(f"🔖 title: {formatted_title}\n\n{full_description}")
 
 print(f"✅ Saved to: {md_output_path}")
