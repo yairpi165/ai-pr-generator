@@ -58,7 +58,7 @@ GEMINI_API_KEY=your_api_key_here
 3. Click **“Create API Key”**
 4. Paste the key into your `.env` file as shown above
 
-> ⚠️ Make sure your account has access to gemini-2.0-flash
+> ⚠️ Make sure your account has access to Gemini 1.5 (Pro or Flash)
 
 ---
 
@@ -165,6 +165,82 @@ generate-pr-desc/
 - Terminal ❤️
 
 ---
+
+
+---
+
+## 🛠 Contributing
+
+We welcome contributions! If you’d like to suggest improvements, fix bugs, or add new features, follow these steps:
+
+### 1. Fork the repository
+
+Click the **Fork** button in the top right to create your own copy of the repo.
+
+### 2. Clone your fork
+
+```bash
+git clone https://github.com/your-username/ai-pr-generator.git
+cd ai-pr-generator
+```
+
+### 3. Create a feature branch
+
+```bash
+git checkout -b feat/my-awesome-change
+```
+
+Use a clear and descriptive branch name starting with:
+- `feat/` for features
+- `fix/` for bug fixes
+- `chore/` for small improvements
+- `docs/` for documentation updates
+
+### 4. Install dependencies
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Or, if you're only modifying `generate.sh`, you can skip Python setup.
+
+### 5. Make your changes
+
+Keep changes focused. If your contribution includes new functionality, update the documentation and add example usage.
+
+### 6. Commit your changes
+
+```bash
+git add .
+git commit -m "feat: add support for --ticket option"
+```
+
+Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for clear commit history.
+
+### 7. Push and open a PR
+
+```bash
+git push origin feat/my-awesome-change
+```
+
+Then, open a Pull Request from your fork to `main`.  
+Please describe what your PR does and **include before/after examples** if applicable.
+
+---
+
+### 🧪 Before submitting
+
+- [ ] Run the script manually and test that it works
+- [ ] Test with multiple PR types and title scenarios
+- [ ] Confirm that clipboard and editor options still behave correctly
+- [ ] Lint your code if you added any Python
+
+---
+
+Thanks for helping make this project better! 💡
+
 
 ## 📄 License
 
