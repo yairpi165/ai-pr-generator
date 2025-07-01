@@ -74,6 +74,7 @@ export PR_EXPLANATION="$EXPLANATION"
 # 🤖 Call Gemini API
 echo "🤖 Generating PR description with Gemini..."
 python3 "$SCRIPT_DIR/gen_pr.py"
+python3 "$SCRIPT_DIR/open_pr_browser.py"
 
 # 📤 Output options
 echo ""
