@@ -36,8 +36,11 @@ else
   TITLE="$2"
 fi
 
-# 🎫 Optional: ticket name (e.g. RND-1234)
+# 🎫 Optional: ticket name
 read -p "🎫 Enter ticket name (optional): " TICKET
+
+# 🗒️ Optional: user explanation
+read -p "🗒️  Enter short explanation for AI (optional): " EXPLANATION
 
 # 🧠 Compose full title
 if [ -n "$TITLE" ] && [ -n "$TICKET" ]; then
@@ -50,7 +53,11 @@ else
   FULL_TITLE=""
 fi
 
-export PR_TITLE="$FULL_TITLE"
+echo ""
+[ -n "$TYPE" ] && echo "📋 PR Type:  $TYPE"
+[ -n "$TITLE" ] && echo "📝 PR Title: $TITLE"
+[ -n "$TICKET" ] && echo "🎫 Ticket:   $TICKET"
+[ -n "$EXPLANATION" ] && echo "🗒️  Explanation: $EXPLANATION"
 
 # 🛠️ Generate the git diff
 git diff origin/main...HEAD > "$SCRIPT_DIR/diff.txt"
@@ -61,6 +68,8 @@ source "$SCRIPT_DIR/venv/bin/activate"
 # 🌍 Export environment variables
 export PR_TYPE="$TYPE"
 export PR_TITLE="$FULL_TITLE"
+export PR_TICKET="$TICKET"
+export PR_EXPLANATION="$EXPLANATION"
 
 # 🤖 Call Gemini API
 echo "🤖 Generating PR description with Gemini..."
