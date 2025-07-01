@@ -96,4 +96,4 @@ md_output_path = os.path.join(base_dir, "pr-description.md")
 with open(md_output_path, "w") as f:
     f.write(f"🔖 title: {formatted_title}\n\n{full_description}")
 
-print(f"✅ Saved to: {md_output_path}")
+print(f"✅ Saved to: {md_output_path}\n")
