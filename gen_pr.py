@@ -1,4 +1,5 @@
 # gen_pr.py
+
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
@@ -20,8 +21,9 @@ with open(diff_path, "r") as file:
 # Load PR metadata
 pr_type = os.getenv("PR_TYPE", "feature").lower()
 pr_title_raw = os.getenv("PR_TITLE", "").strip()
+ticket = os.getenv("PR_TICKET", "").strip()
+explanation = os.getenv("PR_EXPLANATION", "").strip()
 
-ticket = ""
 title = ""
 use_ai_title = False
 
@@ -36,7 +38,7 @@ elif pr_title_raw:
     else:
         ticket = pr_title_raw
 
-# If title is missing, use AI to generate one (even if ticket is empty)
+# If title is missing, use AI to generate one
 if not title:
     use_ai_title = True
     title = "AI-generated title"
@@ -52,6 +54,15 @@ Do NOT include any punctuation or markdown — just return the title text.
 Git diff:
 {diff}
 """
+
+    if explanation:
+        title_prompt += f"""
+
+Additional context from the author (use this to improve accuracy and relevance):
+
+{explanation}
+"""
+
     title_response = model.generate_content(title_prompt)
     title = title_response.text.strip().strip('"').strip()
 
@@ -63,20 +74,36 @@ formatted_title = f"{pr_type}{ticket_prefix}: {title}".strip(": ").strip()
 prompt = f"""
 You're a senior software engineer writing a Bitbucket pull request description.
 
-Please generate a professional **Markdown** PR description only — no title.
+Please generate a professional, **short and concise** PR description in **Markdown format** — no title.
+
+Keep it focused and direct. Avoid redundant wording. Use bullet points where possible.
 
 Use this structure:
 
 ## 🧠 Summary
+A 2-3 sentence summary of what this PR does, in clear language.
+
 ## ✅ Changes
+A concise bullet list of changes (ideally 3-5 items).
+
 ## 🔍 Context
+1-2 sentences of context on why this is needed.
 
 Use the following git diff as input:
 
 {diff}
-
-Do not include any title or triple backticks. Only return the description body.
 """
+
+# Add optional user-provided explanation
+if explanation:
+    prompt += f"""
+
+Additional context from the author (use this to improve accuracy and relevance):
+
+{explanation}
+"""
+
+prompt += "\n\nDo not include any title or triple backticks. Only return the description body."
 
 # Generate description from Gemini
 response = model.generate_content(prompt)
@@ -84,7 +111,6 @@ pr_body = response.text.strip()
 
 # Final output with our controlled title
 full_description = f"# 🔖 title: {formatted_title}\n\n{pr_body}"
-
 
 # Print result
 print("\n--- ✨ Generated PR Description ---\n")
@@ -94,6 +120,6 @@ print("\n-----------------------------------\n")
 # Save to file
 md_output_path = os.path.join(base_dir, "pr-description.md")
 with open(md_output_path, "w") as f:
-    f.write(f"🔖 title: {formatted_title}\n\n{full_description}")
+    f.write(full_description)
 
 print(f"✅ Saved to: {md_output_path}")
