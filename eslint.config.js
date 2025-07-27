@@ -3,6 +3,7 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
+import globals from 'globals'
 
 export default [
   js.configs.recommended,
@@ -20,6 +21,7 @@ export default [
         process: 'readonly',
         Buffer: 'readonly',
         fetch: 'readonly',
+        ...globals.jest,
       },
     },
     plugins: {
@@ -47,4 +49,4 @@ export default [
   {
     ignores: ['dist/', 'node_modules/', '*.js', '*.d.ts'],
   },
-];
+]

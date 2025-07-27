@@ -248,6 +248,12 @@ npm run build
 # Development mode (watch for changes)
 npm run dev
 
+# Testing
+npm test              # Run all tests
+npm run test:watch    # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
+npm run test:verbose  # Run tests with verbose output
+
 # Linting
 npm run lint          # Check for linting issues
 npm run lint:fix      # Fix auto-fixable linting issues
@@ -256,17 +262,41 @@ npm run lint:fix      # Fix auto-fixable linting issues
 npm run format        # Format all files
 npm run format:check  # Check if files are formatted
 
+# Type checking
+npm run tsc           # TypeScript type checking
+
 # Combined checks
-npm run check         # Run lint + format check
+npm run check         # Run lint + format check + type check
 npm run fix           # Run lint:fix + format
+```
+
+### Testing
+
+This project uses Jest for testing with TypeScript support:
+
+- **Test Framework**: Jest with ts-jest for TypeScript support
+- **Coverage**: Built-in coverage reporting with HTML output
+- **Watch Mode**: Interactive test watching with file filtering
+- **ES Modules**: Full support for ES modules and import.meta
+- **Mocking**: Built-in mocking capabilities for external dependencies
+
+#### Test Structure
+```
+src/__tests__/
+├── setup.ts          # Global test setup and mocks
+├── basic.test.ts     # Basic functionality tests
+└── [module].test.ts  # Module-specific tests
 ```
 
 ### Configuration Files
 
-- `.eslintrc.js` - ESLint configuration with TypeScript support
+- `jest.config.ts` - Jest testing configuration with TypeScript support
+- `eslint.config.js` - ESLint configuration with TypeScript support
 - `.prettierrc` - Prettier formatting rules
 - `.prettierignore` - Files to ignore during formatting
 - `tsconfig.json` - TypeScript compiler configuration
+- `.husky/pre-commit` - Pre-commit hook configuration
+- `package.json` - lint-staged configuration for staged files
 
 ## 📋 Example Output
 
