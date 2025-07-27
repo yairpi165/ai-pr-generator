@@ -24,13 +24,13 @@ echo "✅ Node.js $(node -v) detected"
 
 # Install Node.js dependencies and build
 echo "📦 Installing Node.js dependencies..."
-npm install
+yarn install --ignore-engines
 
 echo "🔨 Building TypeScript..."
-npm run build
+yarn build
 
 echo "🔑 Installing CLI globally..."
-npm link
+yarn link
 
 ALIAS_CMD="genpr"
 

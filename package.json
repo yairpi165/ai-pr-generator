@@ -11,6 +11,7 @@
     "build": "tsc",
     "start": "node dist/cli.js",
     "dev": "tsc -w",
+    "dev:watch": "yarn build --watch",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -20,9 +21,10 @@
     "format": "prettier --write src/**/*.ts",
     "format:check": "prettier --check src/**/*.ts",
     "tsc": "tsc --noEmit",
-    "check": "npm run lint && npm run format:check && npm run tsc",
-    "fix": "npm run lint:fix && npm run format",
-    "prepare": "husky"
+    "check": "yarn lint && yarn format:check && yarn tsc",
+    "fix": "yarn lint:fix && yarn format",
+    "prepare": "husky",
+    "postinstall": "husky"
   },
   "keywords": [
     "ai",
@@ -63,7 +65,8 @@
     "typescript": "^5.8.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "yarn": ">=1.22.0"
   },
   "lint-staged": {
     "src/**/*.ts": [

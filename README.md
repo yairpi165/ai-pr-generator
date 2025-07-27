@@ -42,7 +42,18 @@ This tool analyzes your Git diff, prompts for the PR type, title, and optional t
 ### Prerequisites
 
 - Node.js 18+ installed
+- Yarn package manager installed
 - Git repository with changes
+
+### Installing Yarn
+
+If you don't have Yarn installed, you can install it via npm:
+
+```bash
+npm install -g yarn
+```
+
+Or follow the [official Yarn installation guide](https://classic.yarnpkg.com/en/docs/install/).
 
 ### Development Setup
 
@@ -50,25 +61,25 @@ This project uses ESLint and Prettier for code quality and formatting:
 
 ```bash
 # Install dependencies
-npm install
+yarn install
 
 # Run linting
-npm run lint
+yarn lint
 
 # Fix linting issues
-npm run lint:fix
+yarn lint:fix
 
 # Format code
-npm run format
+yarn format
 
 # Check formatting
-npm run format:check
+yarn format:check
 
 # Run all checks (lint + format check)
-npm run check
+yarn check
 
 # Fix all issues (lint fix + format)
-npm run fix
+yarn fix
 ```
 
 ### 1. Clone the repository
