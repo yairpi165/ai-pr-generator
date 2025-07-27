@@ -1,0 +1,38 @@
+{
+  "bitbucket": [
+    {
+      "name": "John Doe",
+      "username": "johndoe"
+    },
+    {
+      "name": "Jane Smith",
+      "username": "janesmith"
+    }
+  ],
+  "github": [
+    {
+      "name": "John Doe",
+      "username": "johndoe"
+    },
+    {
+      "name": "Jane Smith",
+      "username": "janesmith"
+    }
+  ],
+  "gitlab": [
+    {
+      "name": "John Doe",
+      "username": "johndoe"
+    },
+    {
+      "name": "Jane Smith",
+      "username": "janesmith"
+    }
+  ],
+  "default": [
+    {
+      "name": "Default Reviewer",
+      "username": "default"
+    }
+  ]
+} 

@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+set -e
+
+# Lint only staged files
+yarn lint-staged
+
+# Full project type‐check
+yarn tsc
+
+# Run all tests with coverage and fail if coverage is below threshold
+yarn test:coverage
