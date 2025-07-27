@@ -1,6 +1,6 @@
 # 🧠 AI Pull Request Generator
 
-Generate beautiful, structured pull request descriptions using **AI** (GPT-4 or Gemini), straight from your terminal.
+Generate beautiful, structured pull request descriptions using **AI** (GPT or Gemini), straight from your terminal.
 
 This tool analyzes your Git diff, prompts for the PR type, title, and optional ticket ID, and generates a complete, professional-looking PR description saved to `pr-description.md`. It supports multiple AI providers with automatic fallback for maximum reliability.
 
