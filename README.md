@@ -254,31 +254,31 @@ This project uses several tools to maintain code quality:
 
 ```bash
 # Build the project
-npm run build
+yarn build
 
 # Development mode (watch for changes)
-npm run dev
+yarn dev
 
 # Testing
-npm test              # Run all tests
-npm run test:watch    # Run tests in watch mode
-npm run test:coverage # Run tests with coverage report
-npm run test:verbose  # Run tests with verbose output
+yarn test              # Run all tests
+yarn test:watch        # Run tests in watch mode
+yarn test:coverage     # Run tests with coverage report
+yarn test:verbose      # Run tests with verbose output
 
 # Linting
-npm run lint          # Check for linting issues
-npm run lint:fix      # Fix auto-fixable linting issues
+yarn lint          # Check for linting issues
+yarn lint:fix      # Fix auto-fixable linting issues
 
 # Formatting
-npm run format        # Format all files
-npm run format:check  # Check if files are formatted
+yarn format        # Format all files
+yarn format:check  # Check if files are formatted
 
 # Type checking
-npm run tsc           # TypeScript type checking
+yarn tsc           # TypeScript type checking
 
 # Combined checks
-npm run check         # Run lint + format check + type check
-npm run fix           # Run lint:fix + format
+yarn check         # Run lint + format check + type check
+yarn fix           # Run lint:fix + format
 ```
 
 ### Testing
@@ -364,7 +364,7 @@ ai-pr-generator/
 
 ```bash
 # Install dependencies
-npm install
+yarn install
 
 # Run locally
 node src/cli.js
@@ -441,6 +441,10 @@ genpr --provider Gemini
 ```
 
 ---
+
+## 📋 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes and releases.
 
 ## 📜 License
 
