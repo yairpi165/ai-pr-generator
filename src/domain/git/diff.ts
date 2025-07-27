@@ -62,8 +62,19 @@ export const checkGitRepository = (): void => {
   try {
     const repo = getGitRepository()
     process.chdir(repo.root)
-  } catch {
-    throw new Error(GIT_CONSTANTS.ERRORS.NOT_GIT_REPO)
+  } catch (error) {
+    if (error instanceof Error) {
+      // Only convert git repository errors to the generic error
+      if (
+        error.message.includes('Not a git repository') ||
+        error.message.includes('fatal: Not a git repository')
+      ) {
+        throw new Error(GIT_CONSTANTS.ERRORS.NOT_GIT_REPO)
+      }
+      // Propagate other errors (like permission errors) as-is
+      throw error
+    }
+    throw error
   }
 }
 

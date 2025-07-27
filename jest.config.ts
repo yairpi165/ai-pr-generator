@@ -19,6 +19,11 @@ const config: Config = {
       'ts-jest',
       {
         useESM: true,
+        tsconfig: 'tsconfig.test.json',
+        moduleNameMapper: {
+          '^(\\.{1,2}/.*)\\.js$': '$1',
+        },
+        isolatedModules: false,
       },
     ],
   },
@@ -36,10 +41,10 @@ const config: Config = {
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
     global: {
-      branches: 0,
-      functions: 0,
-      lines: 0,
-      statements: 0,
+      branches: 35,
+      functions: 35,
+      lines: 35,
+      statements: 35,
     },
   },
 
@@ -58,6 +63,9 @@ const config: Config = {
     'constants\\.ts$',
     'interfaces\\.ts$',
     'enums\\.ts$',
+    'index\\.ts$',
+    'environment\\.ts$',
+    'paths\\.ts$',
     'mocks\\.ts$',
     '\\.d\\.ts$',
   ],
@@ -66,7 +74,7 @@ const config: Config = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
-    '\\.*/(types|constants|interfaces|enums|mocks)\\.ts$',
+    '\\.*/(types|constants|interfaces|enums|mocks|index|environment|paths)\\.ts$',
     '\\.d\\.ts$',
   ],
 
@@ -82,6 +90,11 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
+
+  // Transform ignore patterns for ES modules
+  transformIgnorePatterns: [
+    'node_modules/(?!(inquirer|chalk|clipboardy|open|#ansi-styles|ansi-styles|supports-color)/)',
+  ],
 
   // Test timeout
   testTimeout: 10000,

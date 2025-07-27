@@ -1,6 +1,7 @@
 {
   "name": "ai-pr-generator-node",
   "version": "1.0.0",
+  "private": true,
   "description": "Generate beautiful, structured pull request descriptions using Gemini AI",
   "main": "dist/cli.js",
   "type": "module",
@@ -23,8 +24,7 @@
     "tsc": "tsc --noEmit",
     "check": "yarn lint && yarn format:check && yarn tsc",
     "fix": "yarn lint:fix && yarn format",
-    "prepare": "husky",
-    "postinstall": "husky"
+    "prepare": "husky"
   },
   "keywords": [
     "ai",
@@ -55,17 +55,18 @@
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.3",
+    "eslint-plugin-unused-imports": "^4.1.4",
     "husky": "^9.1.7",
     "jest": "^30.0.5",
     "jest-watch-typeahead": "^3.0.1",
-    "lint-staged": "^16.1.2",
+    "lint-staged": "^15.2.2",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=20.0.0",
     "yarn": ">=1.22.0"
   },
   "lint-staged": {

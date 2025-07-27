@@ -1,9 +1,3 @@
-import path from 'path'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
 /**
  * Configuration module constants
  */
@@ -17,7 +11,7 @@ export const CONFIG_CONSTANTS = {
 
   // File paths
   PATHS: {
-    PROJECT_ROOT: path.dirname(path.dirname(path.dirname(__dirname))),
+    PROJECT_ROOT: process.cwd(),
     OUTPUT_FILE: 'pr-description.md',
     DIFF_FILE: 'diff.txt',
     REVIEWERS_FILE: 'reviewers.json',

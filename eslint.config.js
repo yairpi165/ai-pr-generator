@@ -4,6 +4,7 @@ import tsparser from '@typescript-eslint/parser';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals'
+import unusedImports from 'eslint-plugin-unused-imports'
 
 export default [
   js.configs.recommended,
@@ -27,10 +28,12 @@ export default [
     plugins: {
       '@typescript-eslint': tseslint,
       prettier: prettier,
+      'unused-imports': unusedImports,
     },
     rules: {
       ...tseslint.configs.recommended.rules,
       ...prettierConfig.rules,
+      'unused-imports/no-unused-imports': 'error',
       'prettier/prettier': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',

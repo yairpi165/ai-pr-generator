@@ -3,6 +3,27 @@
  * This file runs before each test
  */
 
+// Mock chalk module
+jest.mock('chalk', () => ({
+  blue: jest.fn((text: string) => text),
+  yellow: jest.fn((text: string) => text),
+  red: jest.fn((text: string) => text),
+  green: jest.fn((text: string) => text),
+  bold: jest.fn((text: string) => text),
+  gray: jest.fn((text: string) => text),
+  default: {
+    blue: jest.fn((text: string) => text),
+    yellow: jest.fn((text: string) => text),
+    red: jest.fn((text: string) => text),
+    green: jest.fn((text: string) => text),
+    bold: jest.fn((text: string) => text),
+    gray: jest.fn((text: string) => text),
+  },
+}))
+
+// Mock open module
+jest.mock('open', () => jest.fn())
+
 // Set test environment variables
 process.env.NODE_ENV = 'test'
 

@@ -14,7 +14,7 @@
     "sourceType": "module",
     "project": "./tsconfig.json"
   },
-  "plugins": ["@typescript-eslint", "prettier"],
+  "plugins": ["@typescript-eslint", "prettier", "unused-imports"],
   "rules": {
     "prettier/prettier": "error",
     "@typescript-eslint/no-unused-vars": [
@@ -28,7 +28,17 @@
     "prefer-const": "error",
     "no-var": "error",
     "no-console": "off",
-    "no-debugger": "error"
+    "no-debugger": "error",
+    "unused-imports/no-unused-imports": "error",
+    "unused-imports/no-unused-vars": [
+      "error",
+      {
+        "vars": "all",
+        "varsIgnorePattern": "^_",
+        "args": "after-used",
+        "argsIgnorePattern": "^_"
+      }
+    ]
   },
   "ignorePatterns": ["dist/", "node_modules/", "*.js", "*.d.ts"],
   "overrides": [
