@@ -53,7 +53,7 @@ const parsePRTitle = (prTitle: string): PRTitleInfo => {
  */
 const buildTitlePrompt = (diff: string, explanation: string): string => {
   let prompt = `
-You're a senior software engineer writing a Bitbucket pull request.
+You're a senior software engineer writing a pull request.
 
 Based on this git diff, generate a short, descriptive PR title in sentence case.
 Do NOT include any punctuation or markdown — just return the title text.
@@ -74,7 +74,7 @@ ${diff}
  */
 const buildDescriptionPrompt = (diff: string, explanation: string): string => {
   let prompt = `
-You're a senior software engineer writing a Bitbucket pull request description.
+You're a senior software engineer writing a pull request description.
 
 Please generate a professional, **short and concise** PR description in **Markdown format** — no title.
 

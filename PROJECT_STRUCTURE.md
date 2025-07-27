@@ -4,20 +4,46 @@
 
 ```
 src/
-├── lib/                    # Core library functionality
+├── domain/                 # Core domain functionality
 │   ├── index.ts           # Main exports
-│   ├── types.ts           # All TypeScript interfaces and types
-│   ├── constants.ts       # Global constants and configurations
-│   ├── config.ts          # Application configuration
-│   ├── git.ts             # Git utilities
-│   ├── git-hosting.ts     # Git hosting platform integrations
-│   ├── reviewers.ts       # Reviewers management
-│   ├── pr-generator.ts    # PR description generation
-│   ├── ui.ts              # User interface utilities
-│   └── providers/         # AI provider implementations
-│       ├── manager.ts     # AI provider management
-│       ├── openai.ts      # OpenAI (GPT-4) provider
-│       └── gemini.ts      # Google Gemini provider
+│   ├── ai/                # AI provider implementations
+│   │   ├── index.ts       # AI exports
+│   │   ├── manager.ts     # AI provider management
+│   │   ├── types.ts       # AI types and interfaces
+│   │   ├── constants.ts   # AI constants
+│   │   └── providers/     # AI provider implementations
+│   │       ├── openai.ts  # OpenAI (GPT-4) provider
+│   │       └── gemini.ts  # Google Gemini provider
+│   ├── config/            # Configuration management
+│   │   ├── index.ts       # Config exports
+│   │   ├── environment.ts # Environment variables
+│   │   ├── paths.ts       # File paths
+│   │   ├── types.ts       # Config types
+│   │   └── constants.ts   # Config constants
+│   ├── git/               # Git utilities
+│   │   ├── index.ts       # Git exports
+│   │   ├── diff.ts        # Git diff generation
+│   │   ├── repository.ts  # Repository management
+│   │   ├── types.ts       # Git types
+│   │   ├── constants.ts   # Git constants
+│   │   └── hosting/       # Git hosting platform integrations
+│   │       ├── index.ts   # Hosting exports
+│   │       ├── bitbucket.ts # Bitbucket integration
+│   │       ├── github.ts  # GitHub integration
+│   │       └── types.ts   # Hosting types
+│   ├── pr/                # PR generation
+│   │   ├── index.ts       # PR exports
+│   │   ├── generator.ts   # PR description generation
+│   │   ├── reviewers.ts   # Reviewers management
+│   │   ├── types.ts       # PR types
+│   │   └── constants.ts   # PR constants
+│   └── ui/                # User interface utilities
+│       ├── index.ts       # UI exports
+│       ├── display.ts     # Display functions
+│       ├── interactive.ts # Interactive prompts
+│       ├── output.ts      # Output handling
+│       ├── types.ts       # UI types
+│       └── constants.ts   # UI constants
 └── cli.ts                 # Command-line interface
 ```
 
@@ -50,54 +76,42 @@ src/
 
 ## 📦 Key Components
 
-### **Types (`types.ts`)**
+### **AI Domain (`ai/`)**
 
-- All TypeScript interfaces
-- AI provider contracts
-- Configuration interfaces
-- Git hosting types
+- **Manager**: Provider orchestration and fallback logic
+- **Types**: AI provider contracts and interfaces
+- **Constants**: AI-specific constants and configurations
+- **Providers**: OpenAI (GPT-4) and Google Gemini integrations
 
-### **Constants (`constants.ts`)**
+### **Configuration (`config/`)**
 
-- Application constants
-- Error messages
-- Success messages
-- UI messages
-- Git commands
-- API endpoints
-- Emojis and symbols
+- **Environment**: Environment variable management
+- **Paths**: File path configurations
+- **Types**: Configuration interfaces
+- **Constants**: Configuration constants
 
-### **Configuration (`config.ts`)**
+### **Git Domain (`git/`)**
 
-- Environment variables
-- File paths
-- AI configuration
-- PR types
+- **Diff**: Git diff generation and analysis
+- **Repository**: Repository validation and management
+- **Types**: Git-related interfaces
+- **Constants**: Git commands and constants
+- **Hosting**: Bitbucket, GitHub, and GitLab integrations
 
-### **Git Utilities (`git.ts`)**
+### **PR Domain (`pr/`)**
 
-- Repository validation
-- Diff generation
-- Branch management
-- Git operations
+- **Generator**: PR description generation logic
+- **Reviewers**: Reviewers configuration and management
+- **Types**: PR-related interfaces
+- **Constants**: PR types and constants
 
-### **Git Hosting (`git-hosting.ts`)**
+### **UI Domain (`ui/`)**
 
-- Bitbucket integration
-- GitHub integration
-- GitLab integration
-- PR creation
-
-### **Reviewers (`reviewers.ts`)**
-
-- Reviewers configuration
-- Platform-specific reviewers
-- Configuration loading
-
-### **AI Providers (`providers/`)**
-
-- **Manager**: Provider orchestration
-- **OpenAI**: GPT-4 integration
+- **Display**: User interface display functions
+- **Interactive**: Interactive prompt handling
+- **Output**: Output file and clipboard management
+- **Types**: UI-related interfaces
+- **Constants**: UI messages and constants
 - **Gemini**: Google AI integration
 
 ## 🔄 Data Flow

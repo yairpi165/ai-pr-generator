@@ -252,7 +252,7 @@ This PR enhances the feature functionality with improved implementation.
       // Check title prompt
       const titleCall = mockProviderManager.generateContent.mock.calls[0][0]
       expect(titleCall).toContain('senior software engineer')
-      expect(titleCall).toContain('Bitbucket pull request')
+      expect(titleCall).toContain('pull request')
       expect(titleCall).toContain('Add new functionality')
       expect(titleCall).toContain(mockDiff)
 

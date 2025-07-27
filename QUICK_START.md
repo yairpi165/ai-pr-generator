@@ -20,7 +20,7 @@ chmod +x install.sh
 The installer will:
 
 - ✅ Detect Node.js 18+
-- 📦 Install dependencies (`npm install`)
+- 📦 Install dependencies (`yarn install`)
 - 🔑 Prompt for Gemini API key
 - 🔗 Add `genpr` alias to your shell
 

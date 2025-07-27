@@ -20,8 +20,9 @@ import {
 /**
  * Parse command line arguments
  */
-const parseArguments = (): { provider?: string; remainingArgs: string[] } => {
-  const args = process.argv.slice(2)
+export const parseArguments = (
+  args: string[] = process.argv.slice(2)
+): { provider?: string; remainingArgs: string[] } => {
   const config: { provider?: string; remainingArgs: string[] } = {
     remainingArgs: [],
   }
@@ -45,7 +46,7 @@ const parseArguments = (): { provider?: string; remainingArgs: string[] } => {
 /**
  * Parse input from command line or interactive prompts
  */
-const parseInput = async (config: {
+export const parseInput = async (config: {
   provider?: string
   remainingArgs: string[]
 }): Promise<PROptions> => {

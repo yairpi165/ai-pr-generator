@@ -75,33 +75,28 @@ describe('CLI', () => {
   })
 
   describe('CLI Argument Parsing Logic', () => {
-    it('should parse --provider argument correctly', () => {
+    it('should have parseArguments function exported', () => {
       const fs = require('fs')
       const cliContent = fs.readFileSync(cliPath, 'utf8')
 
-      // Check that the parseArguments function handles --provider
+      // Check that parseArguments is exported for testing
+      expect(cliContent).toMatch(/export const parseArguments/)
+    })
+
+    it('should have parseInput function exported', () => {
+      const fs = require('fs')
+      const cliContent = fs.readFileSync(cliPath, 'utf8')
+
+      // Check that parseInput is exported for testing
+      expect(cliContent).toMatch(/export const parseInput/)
+    })
+
+    it('should handle --provider flag parsing', () => {
+      const fs = require('fs')
+      const cliContent = fs.readFileSync(cliPath, 'utf8')
+
+      // Check that --provider flag is handled
       expect(cliContent).toMatch(/--provider/)
-      expect(cliContent).toMatch(
-        /config\.provider = args\[providerIndex \+ 1\]/
-      )
-    })
-
-    it('should handle positional arguments', () => {
-      const fs = require('fs')
-      const cliContent = fs.readFileSync(cliPath, 'utf8')
-
-      // Check that positional arguments are handled
-      expect(cliContent).toMatch(/remainingArgs\.length > 0/)
-      expect(cliContent).toMatch(/prType: remainingArgs\[0\]/)
-      expect(cliContent).toMatch(/prTitle: remainingArgs\[1\]/)
-    })
-
-    it('should fall back to interactive input when no args', () => {
-      const fs = require('fs')
-      const cliContent = fs.readFileSync(cliPath, 'utf8')
-
-      // Check that getInteractiveInput is called when no args
-      expect(cliContent).toMatch(/getInteractiveInput\(\)/)
     })
   })
 

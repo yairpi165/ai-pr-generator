@@ -1,8 +1,8 @@
-import js from '@eslint/js';
-import tseslint from '@typescript-eslint/eslint-plugin';
-import tsparser from '@typescript-eslint/parser';
-import prettier from 'eslint-plugin-prettier';
-import prettierConfig from 'eslint-config-prettier';
+import js from '@eslint/js'
+import tseslint from '@typescript-eslint/eslint-plugin'
+import tsparser from '@typescript-eslint/parser'
+import prettier from 'eslint-plugin-prettier'
+import prettierConfig from 'eslint-config-prettier'
 import globals from 'globals'
 import unusedImports from 'eslint-plugin-unused-imports'
 
@@ -50,6 +50,51 @@ export default [
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', '*.js', '*.d.ts', 'src/__tests__/**/*'],
+    files: ['src/__tests__/**/*.ts'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: './tsconfig.test.json',
+      },
+      globals: {
+        ...globals.jest,
+        ...globals.node,
+        global: 'readonly',
+        __dirname: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+      prettier: prettier,
+      'unused-imports': unusedImports,
+    },
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      ...prettierConfig.rules,
+      'unused-imports/no-unused-imports': 'error',
+      'prettier/prettier': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_' },
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-require-imports': 'off',
+      'prefer-const': 'error',
+      'no-var': 'error',
+      'no-console': 'off',
+      'no-debugger': 'error',
+    },
+  },
+  {
+    ignores: ['dist/', 'node_modules/', '*.js', '*.d.ts'],
   },
 ]
