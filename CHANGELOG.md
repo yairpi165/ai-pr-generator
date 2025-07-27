@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Multi-Provider AI Support**: Support for both OpenAI (GPT-4) and Google Gemini AI providers
 - **Interactive CLI**: Beautiful colored terminal interface with arrow key navigation
 - **Platform-Agnostic Prompts**: AI prompts now work with any Git hosting platform
-- **Comprehensive Test Suite**: 396 tests with 98.98% code coverage
+- **Comprehensive Test Suite**: 402 tests with 98.57% code coverage
 - **ESLint Configuration**: Modern ESLint setup with TypeScript and unused imports detection
 - **Domain-Driven Architecture**: Refactored to use clean domain separation (`src/domain/`)
 - **Reviewers Configuration**: Support for platform-specific code reviewers
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Architecture Refactor**: Moved from `src/lib/` to `src/domain/` structure
 - **Package Manager**: Standardized on Yarn instead of npm
-- **Test Coverage**: Increased coverage threshold from 35% to 60%
+- **Test Coverage**: Increased coverage threshold to 95% (statements/lines/functions) and 85% (branches)
 - **CLI Testing**: Replaced brittle regex-based tests with proper unit testing
 - **Documentation**: Updated all documentation to reflect new architecture
 - **ESLint Configuration**: Removed duplicate `.eslintrc.json`, standardized on `eslint.config.js`
@@ -64,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Package Manager**: Yarn
 - **Testing**: Jest with comprehensive test suite
 - **Linting**: ESLint with TypeScript and Prettier
-- **Coverage**: 98.98% statement coverage, 96.01% branch coverage
+- **Coverage**: 98.57% statement coverage, 94.47% branch coverage
 - **Architecture**: Domain-driven design with clean separation of concerns
 
 ---

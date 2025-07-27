@@ -41,10 +41,10 @@ const config: Config = {
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
     global: {
-      branches: 60,
-      functions: 60,
-      lines: 60,
-      statements: 60,
+      branches: 85,
+      functions: 95,
+      lines: 95,
+      statements: 95,
     },
   },
 
@@ -54,7 +54,6 @@ const config: Config = {
     '!src/**/*.d.ts',
     '!src/**/*.test.ts',
     '!src/**/*.spec.ts',
-    '!src/cli.ts',
     '!src/__tests__/**',
   ],
   coveragePathIgnorePatterns: [

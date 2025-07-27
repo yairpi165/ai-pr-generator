@@ -63,17 +63,15 @@ if [ ! -f "$ENV_FILE" ]; then
     read -p "🔑 Enter your Gemini API key (press Enter to skip): " GEMINI_KEY
     
     if [ -n "$OPENAI_KEY" ] || [ -n "$GEMINI_KEY" ]; then
-        # Create .env file
+        # Create .env file (truncate if exists)
+        > "$ENV_FILE"
+        
         if [ -n "$OPENAI_KEY" ]; then
-            echo "OPENAI_API_KEY=$OPENAI_KEY" > "$ENV_FILE"
+            echo "OPENAI_API_KEY=$OPENAI_KEY" >> "$ENV_FILE"
             echo "✅ OpenAI API key saved"
         fi
         if [ -n "$GEMINI_KEY" ]; then
-            if [ -n "$OPENAI_KEY" ]; then
-                echo "GEMINI_API_KEY=$GEMINI_KEY" >> "$ENV_FILE"
-            else
-                echo "GEMINI_API_KEY=$GEMINI_KEY" > "$ENV_FILE"
-            fi
+            echo "GEMINI_API_KEY=$GEMINI_KEY" >> "$ENV_FILE"
             echo "✅ Gemini API key saved"
         fi
         
@@ -123,7 +121,12 @@ fi
 
 # Add global alias
 echo ""
-echo "🔗 Adding global alias..."
+echo "🔗 Setting up global alias..."
+
+# Define the alias command
+ALIAS_CMD="node \"$SCRIPT_DIR/dist/cli.js\""
+
+# Find shell config file
 SHELL_CONFIG=""
 if [ -f "$HOME/.zshrc" ]; then
     SHELL_CONFIG="$HOME/.zshrc"
@@ -134,14 +137,16 @@ elif [ -f "$HOME/.bash_profile" ]; then
 fi
 
 if [ -n "$SHELL_CONFIG" ]; then
-    # Check if genpr command is available globally after yarn link
-    if command -v genpr &> /dev/null; then
-        echo "✅ 'genpr' command is available globally"
-        echo "   No alias needed - you can use 'genpr' directly"
+    # Check if alias already exists
+    if grep -q "alias genpr=" "$SHELL_CONFIG"; then
+        echo "✅ 'genpr' alias already exists in $SHELL_CONFIG"
     else
-        echo "⚠️  'genpr' command not found globally"
-        echo "   You may need to restart your terminal or run:"
-        echo "   source $SHELL_CONFIG"
+        # Add the alias
+        echo "" >> "$SHELL_CONFIG"
+        echo "# AI PR Generator alias" >> "$SHELL_CONFIG"
+        echo "alias genpr=\"$ALIAS_CMD\"" >> "$SHELL_CONFIG"
+        echo "✅ Added 'genpr' alias to $SHELL_CONFIG"
+        echo "   Restart your terminal or run: source $SHELL_CONFIG"
     fi
 else
     echo "⚠️  Could not find shell config file. Please add manually:"
