@@ -1,98 +1,100 @@
-import { AIProvider, AIConfig, AIResponse } from '../types.js'
-import { GeminiProvider } from './gemini.js'
-import { OpenAIProvider } from './openai.js'
+import type { AIProvider, AIResponse, AIConfig } from '../types.js'
 import { APP_CONSTANTS } from '../constants.js'
+import { createGeminiProvider } from './gemini.js'
+import { createOpenAIProvider } from './openai.js'
 
-export class AIProviderManager {
-  private providers: AIProvider[] = []
-  private currentProvider?: AIProvider
+/**
+ * Provider Manager Configuration
+ */
+export interface ProviderManagerConfig {
+  readonly providers: AIProvider[]
+  readonly fallbackEnabled: boolean
+}
 
-  constructor(config: AIConfig) {
-    // Add providers in order of preference
-    this.providers = [
-      new OpenAIProvider(config), // Try GPT-4 first
-      new GeminiProvider(config), // Fallback to Gemini
-    ]
+/**
+ * Provider Manager Factory
+ */
+export const createProviderManager = (config: AIConfig) => {
+  const providers = [
+    createOpenAIProvider(config),
+    createGeminiProvider(config),
+  ].filter(provider => provider.isAvailable())
 
-    // Find first available provider
-    this.currentProvider = this.providers.find(p => p.isAvailable())
+  const managerConfig: ProviderManagerConfig = {
+    providers,
+    fallbackEnabled: true,
   }
 
   /**
-   * Get the current active provider
+   * Check if any providers are available
    */
-  getCurrentProvider(): AIProvider | undefined {
-    return this.currentProvider
+  const hasAvailableProviders = (): boolean => {
+    return managerConfig.providers.length > 0
   }
 
   /**
-   * List all available providers
+   * Get available providers
    */
-  getAvailableProviders(): AIProvider[] {
-    return this.providers.filter(p => p.isAvailable())
+  const getAvailableProviders = (): AIProvider[] => {
+    return [...managerConfig.providers]
   }
 
   /**
-   * Set a specific provider by name
+   * Generate content using the first available provider
    */
-  setProvider(name: string): boolean {
-    const provider = this.providers.find(
-      p => p.name === name && p.isAvailable()
-    )
-    if (provider) {
-      this.currentProvider = provider
-      return true
-    }
-    return false
-  }
-
-  /**
-   * Generate content using the current provider
-   * If the current provider fails, try the next available one
-   */
-  async generateContent(prompt: string): Promise<AIResponse> {
-    const availableProviders = this.getAvailableProviders()
-
-    if (availableProviders.length === 0) {
+  const generateContent = async (prompt: string): Promise<AIResponse> => {
+    if (!hasAvailableProviders()) {
       throw new Error(APP_CONSTANTS.ERRORS.NO_AI_PROVIDERS)
     }
 
-    // Start with current provider if available
-    if (this.currentProvider && this.currentProvider.isAvailable()) {
-      try {
-        return await this.currentProvider.generateContent(prompt)
-      } catch (error) {
-        console.warn(
-          APP_CONSTANTS.INFO.PROVIDER_FAILED.replace(
-            '{provider}',
-            this.currentProvider.name
-          ),
-          error
-        )
-        // Continue to try other providers
-      }
-    }
+    let lastError: Error | null = null
 
-    // Try each available provider in order
-    for (const provider of availableProviders) {
-      if (provider === this.currentProvider) continue // Skip current provider as we already tried it
-
+    for (const provider of managerConfig.providers) {
       try {
-        const result = await provider.generateContent(prompt)
-        this.currentProvider = provider // Update current provider to the successful one
-        return result
-      } catch (error) {
-        console.warn(
-          APP_CONSTANTS.INFO.PROVIDER_FAILED.replace(
-            '{provider}',
-            provider.name
-          ),
-          error
+        console.log(
+          `${APP_CONSTANTS.INFO.TRYING_NEXT_PROVIDER} ${provider.name}`
         )
-        continue
+        return await provider.generateContent(prompt)
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error))
+        console.log(
+          `${APP_CONSTANTS.INFO.PROVIDER_FAILED} ${provider.name}: ${lastError.message}`
+        )
+
+        if (!managerConfig.fallbackEnabled) {
+          throw lastError
+        }
       }
     }
 
     throw new Error(APP_CONSTANTS.ERRORS.ALL_PROVIDERS_FAILED)
   }
+
+  /**
+   * Generate content with a specific provider
+   */
+  const generateContentWithProvider = async (
+    providerName: string,
+    prompt: string
+  ): Promise<AIResponse> => {
+    const provider = managerConfig.providers.find(p => p.name === providerName)
+
+    if (!provider) {
+      throw new Error(`Provider '${providerName}' not found or not available`)
+    }
+
+    return provider.generateContent(prompt)
+  }
+
+  return {
+    hasAvailableProviders,
+    getAvailableProviders,
+    generateContent,
+    generateContentWithProvider,
+  }
 }
+
+/**
+ * Type for the provider manager
+ */
+export type ProviderManager = ReturnType<typeof createProviderManager>

@@ -1,100 +1,73 @@
 import fs from 'fs'
 import { outputPath, aiConfig } from './config.js'
-import { GitUtils } from './git.js'
-import { PRResult } from './types.js'
-import { AIProviderManager } from './providers/manager.js'
+import { generateDiff } from './git.js'
+import type { PRResult } from './types.js'
+import { createProviderManager } from './providers/manager.js'
 
 /**
- * Main PR description generator class
+ * PR Generation Configuration
  */
-export class PRGenerator {
-  private aiManager: AIProviderManager
+export interface PRGenerationConfig {
+  readonly aiManager: ReturnType<typeof createProviderManager>
+  readonly outputPath: string
+}
 
-  constructor() {
-    this.aiManager = new AIProviderManager(aiConfig)
+/**
+ * PR Title and Ticket Information
+ */
+export interface PRTitleInfo {
+  readonly title: string
+  readonly ticket: string
+}
 
-    // Validate that at least one provider is available
-    if (this.aiManager.getAvailableProviders().length === 0) {
-      throw new Error(
-        'No AI providers available. Please configure either OPENAI_API_KEY or GEMINI_API_KEY in your .env file.'
-      )
+/**
+ * Create PR generator configuration
+ */
+export const createPRGenerator = () => {
+  const aiManager = createProviderManager(aiConfig)
+
+  // Validate that at least one provider is available
+  if (!aiManager.hasAvailableProviders()) {
+    throw new Error(
+      'No AI providers available. Please configure either OPENAI_API_KEY or GEMINI_API_KEY in your .env file.'
+    )
+  }
+
+  const config: PRGenerationConfig = {
+    aiManager,
+    outputPath,
+  }
+
+  return config
+}
+
+/**
+ * Parse PR title and extract ticket information
+ */
+const parsePRTitle = (prTitle: string): PRTitleInfo => {
+  let title = ''
+  let ticket = ''
+
+  if (prTitle?.includes(':')) {
+    const parts = prTitle.split(':', 2)
+    ticket = parts[0].trim()
+    title = parts[1].trim()
+  } else if (prTitle) {
+    if (prTitle.includes(' ')) {
+      title = prTitle
+    } else {
+      ticket = prTitle
     }
   }
 
-  /**
-   * Get the current AI provider name
-   */
-  getCurrentProvider(): string {
-    return this.aiManager.getCurrentProvider()?.name || 'None'
-  }
+  return { title, ticket }
+}
 
-  /**
-   * Set a specific AI provider
-   */
-  setProvider(name: string): boolean {
-    return this.aiManager.setProvider(name)
-  }
-
-  /**
-   * Generates a PR description using available AI providers
-   */
-  async generatePRDescription(
-    prType: string,
-    prTitle: string,
-    ticket: string,
-    explanation: string
-  ): Promise<PRResult> {
-    // Generate and load git diff
-    const diff = GitUtils.generateDiff()
-
-    let title = ''
-
-    // Parse PR title
-    if (prTitle?.includes(':')) {
-      const parts = prTitle.split(':', 2)
-      ticket = parts[0].trim()
-      title = parts[1].trim()
-    } else if (prTitle) {
-      if (prTitle.includes(' ')) {
-        title = prTitle
-      } else {
-        ticket = prTitle
-      }
-    }
-
-    // Generate AI title if needed
-    if (!title) {
-      const titlePrompt = this.buildTitlePrompt(diff, explanation)
-      const titleResponse = await this.aiManager.generateContent(titlePrompt)
-      title = titleResponse.text.trim().replace(/^["']|["']$/g, '')
-    }
-
-    // Build final title
-    const ticketPrefix = ticket ? `(${ticket})` : ''
-    const formattedTitle = `${prType}${ticketPrefix}: ${title}`
-      .replace(/^:\s*/, '')
-      .trim()
-
-    // Generate description
-    const descriptionPrompt = this.buildDescriptionPrompt(diff, explanation)
-    const response = await this.aiManager.generateContent(descriptionPrompt)
-    const prBody = response.text.trim()
-
-    // Combine title and description
-    const fullDescription = `# 🔖 ${formattedTitle}\n\n${prBody}`
-
-    return {
-      title: formattedTitle,
-      body: prBody,
-      fullDescription,
-    }
-  }
-
-  /**
-   * Builds the prompt for generating a PR title
-   */
-  private buildTitlePrompt(diff: string, explanation: string): string {
-    let prompt = `
+/**
+ * Build the prompt for generating a PR title
+ */
+const buildTitlePrompt = (diff: string, explanation: string): string => {
+  let prompt = `
 You're a senior software engineer writing a Bitbucket pull request.
 
 Based on this git diff, generate a short, descriptive PR title in sentence case.
@@ -104,18 +77,18 @@ Git diff:
 ${diff}
 `
 
-    if (explanation) {
-      prompt += `\nAdditional context from the author:\n${explanation}`
-    }
-
-    return prompt
+  if (explanation) {
+    prompt += `\nAdditional context from the author:\n${explanation}`
   }
 
-  /**
-   * Builds the prompt for generating a PR description
-   */
-  private buildDescriptionPrompt(diff: string, explanation: string): string {
-    let prompt = `
+  return prompt
+}
+
+/**
+ * Build the prompt for generating a PR description
+ */
+const buildDescriptionPrompt = (diff: string, explanation: string): string => {
+  let prompt = `
 You're a senior software engineer writing a Bitbucket pull request description.
 
 Please generate a professional, **short and concise** PR description in **Markdown format** — no title.
@@ -135,25 +108,108 @@ Use the following git diff as input:
 ${diff}
 `
 
-    if (explanation) {
-      prompt += `\nAdditional context from the author:\n${explanation}`
-    }
-
-    prompt +=
-      '\n\nDo not include any title or triple backticks. Only return the description body.'
-
-    return prompt
+  if (explanation) {
+    prompt += `\nAdditional context from the author:\n${explanation}`
   }
 
-  /**
-   * Saves the PR description to a file
-   */
-  saveToFile(content: string): string {
-    // Make sure we're in the repository root
-    GitUtils.checkGitRepository()
+  prompt +=
+    '\n\nDo not include any title or triple backticks. Only return the description body.'
 
-    // Save the file
-    fs.writeFileSync(outputPath, content, 'utf8')
-    return outputPath
+  return prompt
+}
+
+/**
+ * Generate AI title using the AI provider
+ */
+const generateAITitle = async (
+  config: PRGenerationConfig,
+  diff: string,
+  explanation: string
+): Promise<string> => {
+  const titlePrompt = buildTitlePrompt(diff, explanation)
+  const titleResponse = await config.aiManager.generateContent(titlePrompt)
+  return titleResponse.text.trim().replace(/^["']|["']$/g, '')
+}
+
+/**
+ * Generate PR description using AI
+ */
+const generateAIDescription = async (
+  config: PRGenerationConfig,
+  diff: string,
+  explanation: string
+): Promise<string> => {
+  const descriptionPrompt = buildDescriptionPrompt(diff, explanation)
+  const response = await config.aiManager.generateContent(descriptionPrompt)
+  return response.text.trim()
+}
+
+/**
+ * Format the final PR title
+ */
+const formatPRTitle = (
+  prType: string,
+  title: string,
+  ticket: string
+): string => {
+  const ticketPrefix = ticket ? `(${ticket})` : ''
+  return `${prType}${ticketPrefix}: ${title}`.replace(/^:\s*/, '').trim()
+}
+
+/**
+ * Generate a PR description using available AI providers
+ */
+export const generatePRDescription = async (
+  prType: string,
+  prTitle: string,
+  ticket: string,
+  explanation: string
+): Promise<PRResult> => {
+  const config = createPRGenerator()
+
+  // Generate and load git diff
+  const diff = generateDiff()
+
+  // Parse PR title
+  const { title: parsedTitle, ticket: parsedTicket } = parsePRTitle(prTitle)
+  let finalTitle = parsedTitle
+  const finalTicket = ticket || parsedTicket
+
+  // Generate AI title if needed
+  if (!finalTitle) {
+    finalTitle = await generateAITitle(config, diff, explanation)
   }
+
+  // Build final title
+  const formattedTitle = formatPRTitle(prType, finalTitle, finalTicket)
+
+  // Generate description
+  const prBody = await generateAIDescription(config, diff, explanation)
+
+  // Combine title and description
+  const fullDescription = `# 🔖 ${formattedTitle}\n\n${prBody}`
+
+  return {
+    title: formattedTitle,
+    body: prBody,
+    fullDescription,
+  }
+}
+
+/**
+ * Save the PR description to a file
+ */
+export const savePRToFile = (content: string): string => {
+  // Save the file
+  fs.writeFileSync(outputPath, content, 'utf8')
+  return outputPath
+}
+
+/**
+ * Get current AI provider name
+ */
+export const getCurrentProvider = (): string => {
+  const config = createPRGenerator()
+  const providers = config.aiManager.getAvailableProviders()
+  return providers[0]?.name || 'None'
 }

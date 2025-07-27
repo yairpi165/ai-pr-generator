@@ -3,91 +3,118 @@ import fs from 'fs'
 import { APP_CONSTANTS } from './constants.js'
 
 /**
- * Reviewers configuration for Git hosting platforms
+ * Reviewer information
  */
 export interface Reviewer {
-  name: string
-  email?: string
-  username?: string
+  readonly name: string
+  readonly email?: string
+  readonly username?: string
 }
 
 /**
- * Reviewers configuration
+ * Reviewers configuration for Git hosting platforms
  */
 export interface ReviewersConfig {
-  bitbucket?: Reviewer[]
-  github?: Reviewer[]
-  gitlab?: Reviewer[]
-  default?: Reviewer[] // Used when platform-specific reviewers are not defined
+  readonly bitbucket?: readonly Reviewer[]
+  readonly github?: readonly Reviewer[]
+  readonly gitlab?: readonly Reviewer[]
+  readonly default?: readonly Reviewer[] // Used when platform-specific reviewers are not defined
+}
+
+import type { GitPlatform } from './types.js'
+
+/**
+ * Reviewers state
+ */
+interface ReviewersState {
+  config: ReviewersConfig
+  isLoaded: boolean
+}
+
+// Module state
+const state: ReviewersState = {
+  config: {},
+  isLoaded: false,
 }
 
 /**
- * Reviewers management
+ * Load reviewers configuration from file
  */
-export class Reviewers {
-  private static config: ReviewersConfig = {}
+export const loadReviewersConfig = (configPath?: string): void => {
+  try {
+    const defaultPath =
+      configPath || path.join(process.cwd(), APP_CONSTANTS.REVIEWERS_FILE)
 
-  /**
-   * Load reviewers configuration from file
-   */
-  static loadConfig(configPath?: string): void {
-    try {
-      const defaultPath =
-        configPath || path.join(process.cwd(), APP_CONSTANTS.REVIEWERS_FILE)
+    if (fs.existsSync(defaultPath)) {
+      const configData = fs.readFileSync(defaultPath, 'utf8')
+      state.config = JSON.parse(configData)
+      state.isLoaded = true
 
-      if (fs.existsSync(defaultPath)) {
-        const configData = fs.readFileSync(defaultPath, 'utf8')
-        this.config = JSON.parse(configData)
-        console.log(
-          `${APP_CONSTANTS.EMOJIS.SUCCESS} ${APP_CONSTANTS.SUCCESS.LOADED_REVIEWERS}`
-        )
-      }
-    } catch {
       console.log(
-        `${APP_CONSTANTS.EMOJIS.WARNING} No reviewers configuration found, using defaults`
+        `${APP_CONSTANTS.EMOJIS.SUCCESS} ${APP_CONSTANTS.SUCCESS.LOADED_REVIEWERS}`
       )
     }
+  } catch {
+    console.log(
+      `${APP_CONSTANTS.EMOJIS.WARNING} No reviewers configuration found, using defaults`
+    )
+  }
+}
+
+/**
+ * Get reviewers for a specific platform
+ */
+export const getReviewers = (platform: GitPlatform): readonly Reviewer[] => {
+  if (!state.isLoaded) {
+    loadReviewersConfig()
   }
 
-  /**
-   * Get reviewers for a specific platform
-   */
-  static getReviewers(platform: 'bitbucket' | 'github' | 'gitlab'): Reviewer[] {
-    return this.config[platform] || this.config.default || []
+  return state.config[platform] || state.config.default || []
+}
+
+/**
+ * Get reviewers for Bitbucket
+ */
+export const getBitbucketReviewers = (): readonly Reviewer[] => {
+  return getReviewers('bitbucket')
+}
+
+/**
+ * Get reviewers for GitHub
+ */
+export const getGitHubReviewers = (): readonly Reviewer[] => {
+  return getReviewers('github')
+}
+
+/**
+ * Get reviewers for GitLab
+ */
+export const getGitLabReviewers = (): readonly Reviewer[] => {
+  return getReviewers('gitlab')
+}
+
+/**
+ * Set reviewers configuration
+ */
+export const setReviewersConfig = (config: ReviewersConfig): void => {
+  state.config = config
+  state.isLoaded = true
+}
+
+/**
+ * Get current configuration
+ */
+export const getReviewersConfig = (): ReviewersConfig => {
+  if (!state.isLoaded) {
+    loadReviewersConfig()
   }
 
-  /**
-   * Get reviewers for Bitbucket
-   */
-  static getBitbucketReviewers(): Reviewer[] {
-    return this.getReviewers('bitbucket')
-  }
+  return { ...state.config }
+}
 
-  /**
-   * Get reviewers for GitHub
-   */
-  static getGitHubReviewers(): Reviewer[] {
-    return this.getReviewers('github')
-  }
-
-  /**
-   * Get reviewers for GitLab
-   */
-  static getGitLabReviewers(): Reviewer[] {
-    return this.getReviewers('gitlab')
-  }
-
-  /**
-   * Set reviewers configuration
-   */
-  static setConfig(config: ReviewersConfig): void {
-    this.config = config
-  }
-
-  /**
-   * Get current configuration
-   */
-  static getConfig(): ReviewersConfig {
-    return this.config
-  }
+/**
+ * Check if reviewers are loaded
+ */
+export const isReviewersLoaded = (): boolean => {
+  return state.isLoaded
 }

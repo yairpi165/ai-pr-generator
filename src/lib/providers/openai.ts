@@ -1,51 +1,73 @@
-import { AIProvider, AIResponse, AIConfig } from '../types.js'
 import OpenAI from 'openai'
+import type { AIProvider, AIResponse, AIConfig } from '../types.js'
 import { APP_CONSTANTS } from '../constants.js'
 
-export class OpenAIProvider implements AIProvider {
-  private openai?: OpenAI
-  readonly name = 'GPT-4'
+/**
+ * OpenAI Provider Configuration
+ */
+export interface OpenAIConfig {
+  readonly apiKey: string
+  readonly model: string
+  readonly temperature: number
+}
 
-  constructor(private config: AIConfig) {
-    if (this.isAvailable()) {
-      this.openai = new OpenAI({
-        apiKey: config.openaiApiKey,
-      })
-    }
+/**
+ * OpenAI Provider Factory
+ */
+export const createOpenAIProvider = (config: AIConfig): AIProvider => {
+  const openAIConfig: OpenAIConfig = {
+    apiKey: config.openaiApiKey as string,
+    model: 'gpt-4o-mini',
+    temperature: 0.3,
   }
 
-  isAvailable(): boolean {
-    return !!this.config.openaiApiKey
+  /**
+   * Check if OpenAI provider is available
+   */
+  const isAvailable = (): boolean => {
+    return !!openAIConfig.apiKey
   }
 
-  async generateContent(prompt: string): Promise<AIResponse> {
-    if (!this.isAvailable()) {
+  /**
+   * Initialize OpenAI client
+   */
+  const createClient = (): OpenAI => {
+    if (!isAvailable()) {
       throw new Error(APP_CONSTANTS.ERRORS.OPENAI_API_ERROR)
     }
+    return new OpenAI({ apiKey: openAIConfig.apiKey })
+  }
 
-    if (!this.openai) {
-      throw new Error(APP_CONSTANTS.ERRORS.OPENAI_API_ERROR)
-    }
-
+  /**
+   * Generate content using OpenAI
+   */
+  const generateContent = async (prompt: string): Promise<AIResponse> => {
     try {
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const openai = createClient()
+      const completion = await openai.chat.completions.create({
+        model: openAIConfig.model,
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
+        temperature: openAIConfig.temperature,
       })
 
-      const text = completion.choices[0]?.message?.content?.trim()
-      if (!text) {
+      const content = completion.choices[0]?.message?.content
+      if (!content) {
         throw new Error(APP_CONSTANTS.ERRORS.NO_RESPONSE_OPENAI)
       }
 
-      return { text }
+      return {
+        text: content.trim(),
+      }
     } catch (error) {
-      throw new Error(
-        `OpenAI API error: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      )
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
+      throw new Error(`OpenAI API error: ${errorMessage}`)
     }
+  }
+
+  return {
+    name: 'OpenAI',
+    isAvailable,
+    generateContent,
   }
 }

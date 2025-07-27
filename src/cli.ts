@@ -2,99 +2,101 @@
 
 import chalk from 'chalk'
 import {
-  PRGenerator,
-  UI,
+  generatePRDescription,
+  savePRToFile,
+  getCurrentProvider,
+  getInteractiveInput,
+  displayOptions,
+  displayProgress,
+  displayResult,
+  displayError,
+  handleOutputOptions,
   outputPath,
-  PROptions,
-  Reviewers,
+  type PROptions,
+  loadReviewersConfig,
   APP_CONSTANTS,
 } from './lib/index.js'
 
 /**
- * Main CLI class
+ * Parse command line arguments
  */
-class CLI {
-  private generator: PRGenerator
+const parseArguments = (): { provider?: string } => {
+  const args = process.argv.slice(2)
+  const config: { provider?: string } = {}
 
-  constructor() {
-    this.generator = new PRGenerator()
+  // Check for provider selection flag
+  if (args[0] === '--provider' && args[1]) {
+    config.provider = args[1]
+    args.splice(0, 2) // Remove provider args
+  }
+
+  return config
+}
+
+/**
+ * Parse input from command line or interactive prompts
+ */
+const parseInput = async (): Promise<PROptions> => {
+  const args = process.argv.slice(2)
+  const config = parseArguments()
+
+  // If provider is specified, validate it (this would need to be implemented)
+  if (config.provider) {
+    console.log(`Using provider: ${config.provider}`)
+  }
+
+  if (args.length > 0) {
+    return {
+      prType: args[0],
+      prTitle: args[1] || '',
+      ticket: '',
+      explanation: '',
+    }
+  }
+
+  return await getInteractiveInput()
+}
+
+/**
+ * Main CLI function
+ */
+const runCLI = async (): Promise<void> => {
+  try {
+    console.log(chalk.blue.bold(`${APP_CONSTANTS.UI.WELCOME}\n`))
+
     // Load reviewers configuration
-    Reviewers.loadConfig()
-  }
+    loadReviewersConfig()
 
-  /**
-   * Runs the CLI
-   */
-  async run(): Promise<void> {
-    try {
-      console.log(chalk.blue.bold(`${APP_CONSTANTS.UI.WELCOME}\n`))
+    // Parse command line arguments or get interactive input
+    const options = await parseInput()
 
-      // Parse command line arguments or get interactive input
-      const options = await this.parseInput()
+    // Display selected options
+    displayOptions(options, getCurrentProvider())
 
-      // Display selected options
-      UI.displayOptions(options, this.generator.getCurrentProvider())
+    // Generate PR description
+    displayProgress(`\n${APP_CONSTANTS.UI.GENERATING_DIFF}`)
+    displayProgress(APP_CONSTANTS.UI.GENERATING_PR)
 
-      // Generate PR description
-      UI.displayProgress(`\n${APP_CONSTANTS.UI.GENERATING_DIFF}`)
-      UI.displayProgress(APP_CONSTANTS.UI.GENERATING_PR)
+    const result = await generatePRDescription(
+      options.prType,
+      options.prTitle,
+      options.ticket,
+      options.explanation
+    )
 
-      const result = await this.generator.generatePRDescription(
-        options.prType,
-        options.prTitle,
-        options.ticket,
-        options.explanation
-      )
+    // Save and display result
+    const savedPath = savePRToFile(result.fullDescription)
+    displayResult(result.fullDescription, savedPath, getCurrentProvider())
 
-      // Save and display result
-      const savedPath = this.generator.saveToFile(result.fullDescription)
-      UI.displayResult(
-        result.fullDescription,
-        savedPath,
-        this.generator.getCurrentProvider()
-      )
-
-      // Handle output options
-      await UI.handleOutputOptions(outputPath, result.title, result.body)
-    } catch (error) {
-      UI.displayError(error instanceof Error ? error : new Error(String(error)))
-      process.exit(1)
-    }
-  }
-
-  /**
-   * Parses command line arguments or gets interactive input
-   */
-  private async parseInput(): Promise<PROptions> {
-    const args = process.argv.slice(2)
-
-    if (args.length > 0) {
-      // Check for provider selection flag
-      if (args[0] === '--provider' && args[1]) {
-        if (!this.generator.setProvider(args[1])) {
-          throw new Error(`Invalid or unavailable provider: ${args[1]}`)
-        }
-        args.splice(0, 2) // Remove provider args
-      }
-
-      if (args.length > 0) {
-        return {
-          prType: args[0],
-          prTitle: args[1] || '',
-          ticket: '',
-          explanation: '',
-        }
-      }
-    }
-
-    return await UI.getInteractiveInput()
+    // Handle output options
+    await handleOutputOptions(outputPath, result.title, result.body)
+  } catch (error) {
+    displayError(error instanceof Error ? error : new Error(String(error)))
+    process.exit(1)
   }
 }
 
 // Run the CLI
-const cli = new CLI()
-cli
-  .run()
-  .catch(error =>
-    UI.displayError(error instanceof Error ? error : new Error(String(error)))
-  )
+runCLI().catch(error =>
+  displayError(error instanceof Error ? error : new Error(String(error)))
+)

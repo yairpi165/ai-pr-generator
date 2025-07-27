@@ -4,170 +4,241 @@ import { diffPath } from './config.js'
 import { APP_CONSTANTS } from './constants.js'
 
 /**
- * Git utilities for PR generation
+ * Git Repository Information
  */
-export class GitUtils {
-  private static gitRoot: string | null = null
+export interface GitRepository {
+  readonly root: string
+  readonly currentBranch: string
+  readonly defaultBranch: string
+}
 
-  /**
-   * Gets and caches the git repository root directory
-   * @throws {Error} If not in a git repository
-   */
-  private static getGitRoot(): string {
-    if (!this.gitRoot) {
-      try {
-        this.gitRoot = execSync('git rev-parse --show-toplevel', {
-          encoding: 'utf8',
-        }).trim()
-      } catch {
-        throw new Error(
-          'Not in a git repository. Please run this command from a git repository.'
-        )
+/**
+ * Git Status Information
+ */
+export interface GitStatus {
+  readonly hasLocalChanges: boolean
+  readonly hasUnpushedCommits: boolean
+  readonly hasRemoteChanges: boolean
+}
+
+/**
+ * Get git repository root directory
+ */
+const getGitRoot = (): string => {
+  try {
+    return execSync('git rev-parse --show-toplevel', {
+      encoding: 'utf8',
+    }).trim()
+  } catch {
+    throw new Error(APP_CONSTANTS.ERRORS.NOT_GIT_REPO)
+  }
+}
+
+/**
+ * Get current branch name
+ */
+const getCurrentBranch = (): string => {
+  return execSync('git rev-parse --abbrev-ref HEAD', {
+    encoding: 'utf8',
+  }).trim()
+}
+
+/**
+ * Get default branch name
+ */
+const getDefaultBranch = (): string => {
+  try {
+    return execSync(
+      'git remote show origin | grep "HEAD branch" | cut -d" " -f5',
+      { encoding: 'utf8' }
+    ).trim()
+  } catch {
+    return 'main'
+  }
+}
+
+/**
+ * Get git repository information
+ */
+const getGitRepository = (): GitRepository => {
+  const root = getGitRoot()
+  const currentBranch = getCurrentBranch()
+  const defaultBranch = getDefaultBranch()
+
+  return {
+    root,
+    currentBranch,
+    defaultBranch,
+  }
+}
+
+/**
+ * Check if there are local changes (staged or unstaged)
+ */
+const hasLocalChanges = (): boolean => {
+  try {
+    const status = execSync('git status --porcelain', { encoding: 'utf8' })
+    return status.trim().length > 0
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Check if there are unpushed commits
+ */
+const hasUnpushedCommits = (repo: GitRepository): boolean => {
+  try {
+    const unpushedCommits = execSync(
+      `git log origin/${repo.defaultBranch}..${repo.currentBranch}`,
+      { encoding: 'utf8' }
+    )
+    return unpushedCommits.trim().length > 0
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Check if there are remote changes
+ */
+const hasRemoteChanges = (repo: GitRepository): boolean => {
+  try {
+    const remoteDiff = execSync(
+      `git diff origin/${repo.defaultBranch}...origin/${repo.currentBranch}`,
+      { encoding: 'utf8' }
+    )
+    return remoteDiff.trim().length > 0
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Get git status information
+ */
+const getGitStatus = (repo: GitRepository): GitStatus => {
+  return {
+    hasLocalChanges: hasLocalChanges(),
+    hasUnpushedCommits: hasUnpushedCommits(repo),
+    hasRemoteChanges: hasRemoteChanges(repo),
+  }
+}
+
+/**
+ * Check if the current directory is a git repository
+ */
+export const checkGitRepository = (): void => {
+  try {
+    const repo = getGitRepository()
+    process.chdir(repo.root)
+  } catch {
+    throw new Error(APP_CONSTANTS.ERRORS.NOT_GIT_REPO)
+  }
+}
+
+/**
+ * Check if there are any changes in the repository
+ */
+export const checkGitChanges = (): void => {
+  try {
+    checkGitRepository()
+    const repo = getGitRepository()
+    const status = getGitStatus(repo)
+
+    if (status.hasLocalChanges) {
+      return // We have local changes
+    }
+
+    if (repo.currentBranch !== repo.defaultBranch) {
+      if (status.hasUnpushedCommits || status.hasRemoteChanges) {
+        return // We have changes on this branch
       }
     }
-    return this.gitRoot
-  }
 
-  /**
-   * Checks if the current directory is a git repository
-   * @throws {Error} If not in a git repository
-   */
-  static checkGitRepository(): void {
-    try {
-      // Get and change to repository root
-      const root = this.getGitRoot()
-      process.chdir(root)
-    } catch {
+    throw new Error(APP_CONSTANTS.ERRORS.NO_CHANGES)
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes('Not a git repository')
+    ) {
       throw new Error(APP_CONSTANTS.ERRORS.NOT_GIT_REPO)
     }
+    throw error
+  }
+}
+
+/**
+ * Get staged changes
+ */
+const getStagedChanges = (): string => {
+  return execSync('git diff --staged', { encoding: 'utf8' })
+}
+
+/**
+ * Get unstaged changes
+ */
+const getUnstagedChanges = (): string => {
+  return execSync('git diff', { encoding: 'utf8' })
+}
+
+/**
+ * Get changes from remote branch
+ */
+const getRemoteChanges = (repo: GitRepository): string => {
+  return execSync(
+    `git diff origin/${repo.defaultBranch}...${repo.currentBranch}`,
+    { encoding: 'utf8' }
+  )
+}
+
+/**
+ * Generate git diff content
+ */
+const generateDiffContent = (): string => {
+  const repo = getGitRepository()
+
+  // Try to get local changes first
+  let diff = getStagedChanges()
+  if (!diff.trim()) {
+    diff = getUnstagedChanges()
   }
 
-  /**
-   * Checks if there are any changes in the repository
-   * @throws {Error} If no changes found
-   */
-  static checkGitChanges(): void {
-    try {
-      // Make sure we're in the repository root
-      this.checkGitRepository()
+  // If no local changes, try remote changes
+  if (!diff.trim()) {
+    diff = getRemoteChanges(repo)
+  }
 
-      // Check for local changes (staged or unstaged)
-      const status = execSync('git status --porcelain', { encoding: 'utf8' })
-      if (status.trim()) {
-        return // We have local changes
-      }
+  if (!diff.trim()) {
+    throw new Error(APP_CONSTANTS.ERRORS.NO_CHANGES)
+  }
 
-      // If no local changes, check if we're on a feature branch
-      const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', {
-        encoding: 'utf8',
-      }).trim()
-      const defaultBranch =
-        execSync(
-          'git remote show origin | grep "HEAD branch" | cut -d" " -f5',
-          { encoding: 'utf8' }
-        ).trim() || 'main'
+  return diff
+}
 
-      if (currentBranch !== defaultBranch) {
-        // Check if we have unpushed commits or if branch exists on remote
-        try {
-          const unpushedCommits = execSync(
-            `git log origin/${defaultBranch}..${currentBranch}`,
-            { encoding: 'utf8' }
-          )
-          if (unpushedCommits.trim()) {
-            return // We have unpushed commits
-          }
+/**
+ * Generate a git diff and save it to a file
+ */
+export const generateDiff = (): string => {
+  try {
+    checkGitRepository()
+    checkGitChanges()
 
-          // Check if branch exists on remote and has commits
-          const remoteDiff = execSync(
-            `git diff origin/${defaultBranch}...origin/${currentBranch}`,
-            { encoding: 'utf8' }
-          )
-          if (remoteDiff.trim()) {
-            return // We have changes on remote
-          }
-        } catch {
-          // Ignore errors here as they might be due to remote branch not existing
-        }
-      }
+    const diff = generateDiffContent()
 
-      throw new Error('No changes found in the repository.')
-    } catch (error) {
+    // Save diff to file
+    fs.writeFileSync(diffPath, diff, 'utf8')
+    return diff
+  } catch (error) {
+    if (error instanceof Error) {
       if (
-        error instanceof Error &&
-        error.message.includes('Not a git repository')
+        error.message.includes('Not a git repository') ||
+        error.message.includes('No changes found')
       ) {
-        throw new Error(APP_CONSTANTS.ERRORS.NOT_GIT_REPO)
+        throw error
       }
-      throw error
+      throw new Error(`Failed to generate git diff: ${error.message}`)
     }
-  }
-
-  /**
-   * Generates a git diff and saves it to a file
-   * @returns {string} The generated diff
-   */
-  static generateDiff(): string {
-    try {
-      // Check repository and changes
-      this.checkGitRepository()
-      this.checkGitChanges()
-
-      // Try to get changes from the current branch
-      let diff
-      try {
-        // First try to get staged changes
-        diff = execSync('git diff --staged', { encoding: 'utf8' })
-        if (!diff.trim()) {
-          // If no staged changes, get unstaged changes
-          diff = execSync('git diff', { encoding: 'utf8' })
-        }
-      } catch {
-        throw new Error('Failed to get git diff')
-      }
-
-      // If no local changes, try to get changes from remote
-      if (!diff.trim()) {
-        try {
-          // Get the default branch name
-          const defaultBranch =
-            execSync(
-              'git remote show origin | grep "HEAD branch" | cut -d" " -f5',
-              { encoding: 'utf8' }
-            ).trim() || 'main'
-
-          // Get current branch name
-          const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', {
-            encoding: 'utf8',
-          }).trim()
-
-          // Generate diff against default branch
-          diff = execSync(
-            `git diff origin/${defaultBranch}...${currentBranch}`,
-            {
-              encoding: 'utf8',
-            }
-          )
-        } catch {
-          // If all attempts fail, throw error
-          throw new Error(APP_CONSTANTS.ERRORS.NO_CHANGES)
-        }
-      }
-
-      // Save diff to file
-      fs.writeFileSync(diffPath, diff, 'utf8')
-      return diff
-    } catch (error) {
-      if (error instanceof Error) {
-        if (
-          error.message.includes('Not a git repository') ||
-          error.message.includes('No changes found')
-        ) {
-          throw error
-        }
-        throw new Error(`Failed to generate git diff: ${error.message}`)
-      }
-      throw error
-    }
+    throw error
   }
 }
