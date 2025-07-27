@@ -346,14 +346,50 @@ No need to remember paths.
 ```txt
 ai-pr-generator/
 ├── src/
-│   ├── cli.js             # CLI interface with interactive prompts
-│   └── gen-pr.js          # Core logic for PR generation
-├── package.json           # Node.js dependencies
-├── install.sh             # Installer
-├── pr-description.md      # AI-generated PR description
-├── diff.txt               # Temp file for Git diff
-├── .env                   # Your API key
-└── README.md              # This file
+│   ├── cli.ts                    # CLI interface with interactive prompts
+│   └── domain/                   # Core domain functionality
+│       ├── ai/                   # AI provider implementations
+│       │   ├── manager.ts        # AI provider management
+│       │   ├── providers/        # AI provider implementations
+│       │   │   ├── openai.ts     # OpenAI (GPT-4) provider
+│       │   │   └── gemini.ts     # Google Gemini provider
+│       │   └── types.ts          # AI types and interfaces
+│       ├── config/               # Configuration management
+│       │   ├── environment.ts    # Environment variables
+│       │   ├── paths.ts          # File paths
+│       │   └── types.ts          # Config types
+│       ├── git/                  # Git utilities
+│       │   ├── diff.ts           # Git diff generation
+│       │   ├── repository.ts     # Repository management
+│       │   └── hosting/          # Git hosting platform integrations
+│       │       ├── bitbucket.ts  # Bitbucket integration
+│       │       ├── github.ts     # GitHub integration
+│       │       └── types.ts      # Hosting types
+│       ├── pr/                   # PR generation
+│       │   ├── generator.ts      # PR description generation
+│       │   ├── reviewers.ts      # Reviewers management
+│       │   └── types.ts          # PR types
+│       └── ui/                   # User interface utilities
+│           ├── display.ts        # Display functions
+│           ├── interactive.ts    # Interactive prompts
+│           ├── output.ts         # Output handling
+│           └── types.ts          # UI types
+├── src/__tests__/                # Comprehensive test suite
+├── dist/                         # Compiled JavaScript output
+├── package.json                  # Node.js dependencies and scripts
+├── yarn.lock                     # Yarn lock file
+├── tsconfig.json                 # TypeScript configuration
+├── jest.config.ts                # Jest test configuration
+├── eslint.config.js              # ESLint configuration
+├── install.sh                    # Installer script
+├── .env.example                  # Environment variables template
+├── reviewers.json.example        # Reviewers configuration template
+├── .gemini/                      # AI review configuration
+│   └── styleguide.md             # PR review styleguide
+├── CHANGELOG.md                  # Project changelog
+├── PROJECT_STRUCTURE.md          # Detailed project structure
+├── QUICK_START.md                # Quick start guide
+└── README.md                     # This file
 ```
 
 ---
@@ -366,11 +402,17 @@ ai-pr-generator/
 # Install dependencies
 yarn install
 
-# Run locally
-node src/cli.js
+# Build the project
+yarn build
+
+# Run locally (development)
+yarn dev
+
+# Run locally (production)
+yarn start
 
 # Make CLI executable
-chmod +x src/cli.js
+chmod +x dist/cli.js
 ```
 
 ---
@@ -384,8 +426,9 @@ We welcome contributions!
 1. Fork the repo
 2. Create a branch (use `feat/`, `fix/`, or `docs/` prefixes)
 3. Make your changes
-4. Test your changes: `node src/cli.js`
-5. Open a pull request
+4. Test your changes: `yarn test` and `yarn lint`
+5. Build and test: `yarn build && yarn start`
+6. Open a pull request
 
 ### 🧪 Before submitting
 
@@ -418,7 +461,7 @@ We welcome contributions!
 
 4. **"Permission denied"**
 
-   - Run `chmod +x src/cli.js` to make the CLI executable
+   - Run `chmod +x dist/cli.js` to make the CLI executable
 
 5. **"genpr command not found"**
    - Restart your terminal after installation
