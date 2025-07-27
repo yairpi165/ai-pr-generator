@@ -81,7 +81,9 @@ describe('CLI', () => {
 
       // Check that the parseArguments function handles --provider
       expect(cliContent).toMatch(/--provider/)
-      expect(cliContent).toMatch(/config\.provider = args\[1\]/)
+      expect(cliContent).toMatch(
+        /config\.provider = args\[providerIndex \+ 1\]/
+      )
     })
 
     it('should handle positional arguments', () => {

@@ -74,14 +74,11 @@ export const createProviderManager = (config: AIConfig) => {
     providerName: string,
     prompt: string
   ): Promise<AIResponse> => {
-
-
     const provider = managerConfig.providers.find(p => p.name === providerName)
 
     if (!provider) {
       throw new Error(`Provider '${providerName}' not found or not available`)
     }
-
 
     return provider.generateContent(prompt)
   }
