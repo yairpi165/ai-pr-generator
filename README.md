@@ -33,7 +33,7 @@ This tool analyzes your Git diff, prompts for the PR type, title, and optional t
 - Preview output and copy to clipboard
 - One-liner CLI usage with `genpr`
 - Shows active AI provider
-- **Automatic PR creation** in Bitbucket (with API credentials)
+- **Automatic PR creation** in Bitbucket and GitHub (with API credentials)
 
 ---
 
@@ -43,6 +43,33 @@ This tool analyzes your Git diff, prompts for the PR type, title, and optional t
 
 - Node.js 18+ installed
 - Git repository with changes
+
+### Development Setup
+
+This project uses ESLint and Prettier for code quality and formatting:
+
+```bash
+# Install dependencies
+npm install
+
+# Run linting
+npm run lint
+
+# Fix linting issues
+npm run lint:fix
+
+# Format code
+npm run format
+
+# Check formatting
+npm run format:check
+
+# Run all checks (lint + format check)
+npm run check
+
+# Fix all issues (lint fix + format)
+npm run fix
+```
 
 ### 1. Clone the repository
 
@@ -95,9 +122,12 @@ GEMINI_API_KEY=your_gemini_key_here
 # Optional - for automatic PR creation in Bitbucket:
 BITBUCKET_EMAIL=your_email@example.com
 BITBUCKET_TOKEN=your_app_password_here
+
+# Optional - for automatic PR creation in GitHub:
+GITHUB_TOKEN=your_personal_access_token_here
 ```
 
-## 🔗 Bitbucket API Setup (Optional)
+## 🔗 Git Hosting API Setup (Optional)
 
 For automatic PR creation in Bitbucket:
 
@@ -107,6 +137,14 @@ For automatic PR creation in Bitbucket:
 4. Select 'Pull requests: Write' permission
 5. Copy your email and app password
 6. Add to your `.env` file (or use the installer)
+
+For automatic PR creation in GitHub:
+
+1. Visit: https://github.com/settings/tokens
+2. Click 'Generate new token (classic)'
+3. Select 'repo' scope for full repository access
+4. Copy your personal access token
+5. Add to your `.env` file (or use the installer)
 
 ## 👥 Reviewers Configuration (Optional)
 
@@ -123,7 +161,7 @@ To automatically assign reviewers to your PRs:
       "username": "johndoe"
     },
     {
-      "name": "Jane Smith", 
+      "name": "Jane Smith",
       "username": "janesmith"
     }
   ],
@@ -185,10 +223,50 @@ After generating the PR description, you can:
 - **Copy to clipboard** - Copy the description to your clipboard
 - **Open in editor** - Open the description in your default editor
 - **Open PR in Bitbucket** - Automatically create a PR in Bitbucket (if API credentials are configured)
+- **Open PR in GitHub** - Automatically create a PR in GitHub (if API credentials are configured)
 - **Both** - Copy to clipboard and open in editor
 - **Do nothing** - Just display the result
 
 ---
+
+## 🛠️ Development
+
+### Code Quality
+
+This project uses several tools to maintain code quality:
+
+- **ESLint**: JavaScript/TypeScript linting with TypeScript-specific rules
+- **Prettier**: Code formatting with consistent style
+- **TypeScript**: Static type checking and modern JavaScript features
+
+### Available Scripts
+
+```bash
+# Build the project
+npm run build
+
+# Development mode (watch for changes)
+npm run dev
+
+# Linting
+npm run lint          # Check for linting issues
+npm run lint:fix      # Fix auto-fixable linting issues
+
+# Formatting
+npm run format        # Format all files
+npm run format:check  # Check if files are formatted
+
+# Combined checks
+npm run check         # Run lint + format check
+npm run fix           # Run lint:fix + format
+```
+
+### Configuration Files
+
+- `.eslintrc.js` - ESLint configuration with TypeScript support
+- `.prettierrc` - Prettier formatting rules
+- `.prettierignore` - Files to ignore during formatting
+- `tsconfig.json` - TypeScript compiler configuration
 
 ## 📋 Example Output
 

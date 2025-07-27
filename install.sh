@@ -93,6 +93,22 @@ if [ ! -f "$ENV_FILE" ]; then
             echo "✅ Bitbucket credentials saved"
         fi
         
+        echo ""
+        echo "4️⃣  GitHub Setup (Optional)"
+        echo "------------------------"
+        echo "For automatic PR creation, you can set up GitHub API credentials:"
+        echo "1. Visit: https://github.com/settings/tokens"
+        echo "2. Click 'Generate new token (classic)'"
+        echo "3. Select 'repo' scope for full repository access"
+        echo "4. Copy your personal access token"
+        echo ""
+        read -p "🔑 Enter your GitHub personal access token (press Enter to skip): " GITHUB_TOKEN
+        
+        if [ -n "$GITHUB_TOKEN" ]; then
+            echo "GITHUB_TOKEN=$GITHUB_TOKEN" >> "$ENV_FILE"
+            echo "✅ GitHub credentials saved"
+        fi
+        
         echo "✅ API keys saved to .env file"
     else
         echo "⚠️  No API keys provided. You'll need to create a .env file manually."

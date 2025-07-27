@@ -1,8 +1,8 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 /**
  * Global application constants
@@ -33,6 +33,7 @@ export const APP_CONSTANTS = {
   // API endpoints
   API_ENDPOINTS: {
     BITBUCKET_PR: 'https://api.bitbucket.org/2.0/repositories',
+    GITHUB_PR: 'https://api.github.com/repos',
     OPENAI_CHAT: 'https://api.openai.com/v1/chat/completions',
     GEMINI_GENERATE: 'https://generativelanguage.googleapis.com/v1beta/models',
   },
@@ -164,12 +165,16 @@ Return only the title, nothing else.`,
       'No Bitbucket API credentials found. Opening in browser instead.',
     SET_BITBUCKET_CREDENTIALS:
       'Set BITBUCKET_EMAIL and BITBUCKET_TOKEN environment variables for automatic PR creation.',
+    NO_GITHUB_CREDENTIALS:
+      'No GitHub API credentials found. Opening in browser instead.',
+    SET_GITHUB_CREDENTIALS:
+      'Set GITHUB_TOKEN environment variable for automatic PR creation.',
     UNKNOWN_GIT_PLATFORM: 'Unknown Git hosting platform.',
     SUPPORTED_PLATFORMS: 'Supported platforms: Bitbucket, GitHub, GitLab',
     PROVIDER_FAILED: 'Provider {provider} failed:',
     TRYING_NEXT_PROVIDER: 'Trying next available provider...',
   },
-} as const;
+} as const
 
 /**
  * PR Types configuration
@@ -181,7 +186,7 @@ export const PR_TYPES = [
   { name: '📚 Docs', value: 'docs' },
   { name: '🧹 Chore', value: 'chore' },
   { name: '🔧 Other', value: 'other' },
-] as const;
+] as const
 
 /**
  * Output choices configuration
@@ -190,9 +195,10 @@ export const OUTPUT_CHOICES = [
   { name: '📋 Copy to clipboard', value: 'clipboard' },
   { name: '📝 Open in editor', value: 'editor' },
   { name: '🔗 Open PR in Bitbucket', value: 'bitbucket' },
+  { name: '🐙 Open PR in GitHub', value: 'github' },
   { name: '📋 + 📝 Both', value: 'both' },
   { name: '🚫 Do nothing', value: 'nothing' },
-] as const;
+] as const
 
 /**
  * Environment variable names
@@ -202,25 +208,26 @@ export const ENV_VARS = {
   GEMINI_API_KEY: 'GEMINI_API_KEY',
   BITBUCKET_EMAIL: 'BITBUCKET_EMAIL',
   BITBUCKET_TOKEN: 'BITBUCKET_TOKEN',
-} as const;
+  GITHUB_TOKEN: 'GITHUB_TOKEN',
+} as const
 
 /**
  * Git hosting platform patterns
  */
 export const GIT_PLATFORMS = {
   BITBUCKET: {
-    SSH_PATTERN: /git@bitbucket\.org:([^\/]+)\/([^\/]+)\.git/,
-    HTTPS_PATTERN: /https:\/\/bitbucket\.org\/([^\/]+)\/([^\/]+)\.git/,
+    SSH_PATTERN: /git@bitbucket\.org:([^/]+)\/([^/]+)\.git/,
+    HTTPS_PATTERN: /https:\/\/bitbucket\.org\/([^/]+)\/([^/]+)\.git/,
     DOMAIN: 'bitbucket.org',
   },
   GITHUB: {
-    SSH_PATTERN: /git@github\.com:([^\/]+)\/([^\/]+)\.git/,
-    HTTPS_PATTERN: /https:\/\/github\.com\/([^\/]+)\/([^\/]+)\.git/,
+    SSH_PATTERN: /git@github\.com:([^/]+)\/([^/]+)\.git/,
+    HTTPS_PATTERN: /https:\/\/github\.com\/([^/]+)\/([^/]+)\.git/,
     DOMAIN: 'github.com',
   },
   GITLAB: {
-    SSH_PATTERN: /git@gitlab\.com:([^\/]+)\/([^\/]+)\.git/,
-    HTTPS_PATTERN: /https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\.git/,
+    SSH_PATTERN: /git@gitlab\.com:([^/]+)\/([^/]+)\.git/,
+    HTTPS_PATTERN: /https:\/\/gitlab\.com\/([^/]+)\/([^/]+)\.git/,
     DOMAIN: 'gitlab.com',
   },
-} as const;
+} as const
