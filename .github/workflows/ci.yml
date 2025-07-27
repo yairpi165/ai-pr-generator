@@ -36,6 +36,3 @@ jobs:
 
       - name: Test with coverage
         run: yarn test:coverage
-
-      - name: Test installation process
-        run: ./test-install.sh

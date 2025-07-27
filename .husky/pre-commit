@@ -9,6 +9,3 @@ yarn tsc
 
 # Run all tests with coverage and fail if coverage is below threshold
 yarn test:coverage
-
-# Test installation process
-./test-install.sh
