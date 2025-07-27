@@ -1,15 +1,12 @@
-import type { AIProvider, AIResponse, AIConfig } from '../types.js'
-import { APP_CONSTANTS } from '../constants.js'
-import { createGeminiProvider } from './gemini.js'
-import { createOpenAIProvider } from './openai.js'
-
-/**
- * Provider Manager Configuration
- */
-export interface ProviderManagerConfig {
-  readonly providers: AIProvider[]
-  readonly fallbackEnabled: boolean
-}
+import { AI_CONSTANTS } from './constants.js'
+import type {
+  AIProvider,
+  AIResponse,
+  AIConfig,
+  ProviderManagerConfig,
+} from './types.js'
+import { createGeminiProvider } from './providers/gemini.js'
+import { createOpenAIProvider } from './providers/openai.js'
 
 /**
  * Provider Manager Factory
@@ -44,7 +41,7 @@ export const createProviderManager = (config: AIConfig) => {
    */
   const generateContent = async (prompt: string): Promise<AIResponse> => {
     if (!hasAvailableProviders()) {
-      throw new Error(APP_CONSTANTS.ERRORS.NO_AI_PROVIDERS)
+      throw new Error(AI_CONSTANTS.ERRORS.NO_AI_PROVIDERS)
     }
 
     let lastError: Error | null = null
@@ -52,13 +49,13 @@ export const createProviderManager = (config: AIConfig) => {
     for (const provider of managerConfig.providers) {
       try {
         console.log(
-          `${APP_CONSTANTS.INFO.TRYING_NEXT_PROVIDER} ${provider.name}`
+          `${AI_CONSTANTS.INFO.TRYING_NEXT_PROVIDER} ${provider.name}`
         )
         return await provider.generateContent(prompt)
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
         console.log(
-          `${APP_CONSTANTS.INFO.PROVIDER_FAILED} ${provider.name}: ${lastError.message}`
+          `${AI_CONSTANTS.INFO.PROVIDER_FAILED} ${provider.name}: ${lastError.message}`
         )
 
         if (!managerConfig.fallbackEnabled) {
@@ -67,7 +64,7 @@ export const createProviderManager = (config: AIConfig) => {
       }
     }
 
-    throw new Error(APP_CONSTANTS.ERRORS.ALL_PROVIDERS_FAILED)
+    throw new Error(AI_CONSTANTS.ERRORS.ALL_PROVIDERS_FAILED)
   }
 
   /**

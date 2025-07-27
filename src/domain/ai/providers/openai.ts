@@ -1,15 +1,11 @@
 import OpenAI from 'openai'
-import type { AIProvider, AIResponse, AIConfig } from '../types.js'
-import { APP_CONSTANTS } from '../constants.js'
-
-/**
- * OpenAI Provider Configuration
- */
-export interface OpenAIConfig {
-  readonly apiKey: string
-  readonly model: string
-  readonly temperature: number
-}
+import { AI_CONSTANTS } from '../constants.js'
+import type {
+  AIProvider,
+  AIResponse,
+  AIConfig,
+  OpenAIConfig,
+} from '../types.js'
 
 /**
  * OpenAI Provider Factory
@@ -17,8 +13,8 @@ export interface OpenAIConfig {
 export const createOpenAIProvider = (config: AIConfig): AIProvider => {
   const openAIConfig: OpenAIConfig = {
     apiKey: config.openaiApiKey as string,
-    model: 'gpt-4o-mini',
-    temperature: 0.3,
+    model: AI_CONSTANTS.MODELS.OPENAI.DEFAULT,
+    temperature: AI_CONSTANTS.MODELS.OPENAI.TEMPERATURE,
   }
 
   /**
@@ -33,7 +29,7 @@ export const createOpenAIProvider = (config: AIConfig): AIProvider => {
    */
   const createClient = (): OpenAI => {
     if (!isAvailable()) {
-      throw new Error(APP_CONSTANTS.ERRORS.OPENAI_API_ERROR)
+      throw new Error(AI_CONSTANTS.ERRORS.OPENAI_API_ERROR)
     }
     return new OpenAI({ apiKey: openAIConfig.apiKey })
   }
@@ -52,7 +48,7 @@ export const createOpenAIProvider = (config: AIConfig): AIProvider => {
 
       const content = completion.choices[0]?.message?.content
       if (!content) {
-        throw new Error(APP_CONSTANTS.ERRORS.NO_RESPONSE_OPENAI)
+        throw new Error(AI_CONSTANTS.ERRORS.NO_RESPONSE_OPENAI)
       }
 
       return {

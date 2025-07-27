@@ -14,8 +14,8 @@ import {
   outputPath,
   type PROptions,
   loadReviewersConfig,
-  APP_CONSTANTS,
-} from './lib/index.js'
+  UI_CONSTANTS,
+} from './domain/index.js'
 
 /**
  * Parse command line arguments
@@ -62,7 +62,7 @@ const parseInput = async (): Promise<PROptions> => {
  */
 const runCLI = async (): Promise<void> => {
   try {
-    console.log(chalk.blue.bold(`${APP_CONSTANTS.UI.WELCOME}\n`))
+    console.log(chalk.blue.bold(`${UI_CONSTANTS.MESSAGES.WELCOME}\n`))
 
     // Load reviewers configuration
     loadReviewersConfig()
@@ -74,8 +74,8 @@ const runCLI = async (): Promise<void> => {
     displayOptions(options, getCurrentProvider())
 
     // Generate PR description
-    displayProgress(`\n${APP_CONSTANTS.UI.GENERATING_DIFF}`)
-    displayProgress(APP_CONSTANTS.UI.GENERATING_PR)
+    displayProgress(`\n${UI_CONSTANTS.MESSAGES.GENERATING_DIFF}`)
+    displayProgress(UI_CONSTANTS.MESSAGES.GENERATING_PR)
 
     const result = await generatePRDescription(
       options.prType,

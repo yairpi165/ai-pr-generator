@@ -1,35 +1,9 @@
 import path from 'path'
 import fs from 'fs'
-import { APP_CONSTANTS } from './constants.js'
+import { PR_CONSTANTS } from './constants.js'
+import type { GitPlatform } from '../git/types.js'
 
-/**
- * Reviewer information
- */
-export interface Reviewer {
-  readonly name: string
-  readonly email?: string
-  readonly username?: string
-}
-
-/**
- * Reviewers configuration for Git hosting platforms
- */
-export interface ReviewersConfig {
-  readonly bitbucket?: readonly Reviewer[]
-  readonly github?: readonly Reviewer[]
-  readonly gitlab?: readonly Reviewer[]
-  readonly default?: readonly Reviewer[] // Used when platform-specific reviewers are not defined
-}
-
-import type { GitPlatform } from './types.js'
-
-/**
- * Reviewers state
- */
-interface ReviewersState {
-  config: ReviewersConfig
-  isLoaded: boolean
-}
+import type { Reviewer, ReviewersConfig, ReviewersState } from './types.js'
 
 // Module state
 const state: ReviewersState = {
@@ -43,21 +17,17 @@ const state: ReviewersState = {
 export const loadReviewersConfig = (configPath?: string): void => {
   try {
     const defaultPath =
-      configPath || path.join(process.cwd(), APP_CONSTANTS.REVIEWERS_FILE)
+      configPath || path.join(process.cwd(), PR_CONSTANTS.REVIEWERS_FILE)
 
     if (fs.existsSync(defaultPath)) {
       const configData = fs.readFileSync(defaultPath, 'utf8')
       state.config = JSON.parse(configData)
       state.isLoaded = true
 
-      console.log(
-        `${APP_CONSTANTS.EMOJIS.SUCCESS} ${APP_CONSTANTS.SUCCESS.LOADED_REVIEWERS}`
-      )
+      console.log(`✅ ${PR_CONSTANTS.SUCCESS.LOADED_REVIEWERS}`)
     }
   } catch {
-    console.log(
-      `${APP_CONSTANTS.EMOJIS.WARNING} No reviewers configuration found, using defaults`
-    )
+    console.log(`⚠️ ${PR_CONSTANTS.WARNING.NO_REVIEWERS_CONFIG}`)
   }
 }
 

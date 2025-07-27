@@ -52,9 +52,23 @@ const config: Config = {
     '!src/cli.ts',
     '!src/__tests__/**',
   ],
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    'types\\.ts$',
+    'constants\\.ts$',
+    'interfaces\\.ts$',
+    'enums\\.ts$',
+    'mocks\\.ts$',
+    '\\.d\\.ts$',
+  ],
 
   // Ignore patterns
-  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '\\.*/(types|constants|interfaces|enums|mocks)\\.ts$',
+    '\\.d\\.ts$',
+  ],
 
   // Clear mocks between tests
   clearMocks: true,

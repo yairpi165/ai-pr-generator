@@ -1,14 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { AIProvider, AIResponse, AIConfig } from '../types.js'
-import { APP_CONSTANTS } from '../constants.js'
-
-/**
- * Gemini AI Provider Configuration
- */
-export interface GeminiConfig {
-  readonly apiKey: string
-  readonly model: string
-}
+import { AI_CONSTANTS } from '../constants.js'
+import type {
+  AIProvider,
+  AIResponse,
+  AIConfig,
+  GeminiConfig,
+} from '../types.js'
 
 /**
  * Gemini Provider Factory
@@ -16,7 +13,7 @@ export interface GeminiConfig {
 export const createGeminiProvider = (config: AIConfig): AIProvider => {
   const geminiConfig: GeminiConfig = {
     apiKey: config.geminiApiKey as string,
-    model: 'gemini-2.0-flash',
+    model: AI_CONSTANTS.MODELS.GEMINI.DEFAULT,
   }
 
   /**
@@ -31,7 +28,7 @@ export const createGeminiProvider = (config: AIConfig): AIProvider => {
    */
   const createClient = (): GoogleGenerativeAI => {
     if (!isAvailable()) {
-      throw new Error(APP_CONSTANTS.ERRORS.GEMINI_API_ERROR)
+      throw new Error(AI_CONSTANTS.ERRORS.GEMINI_API_ERROR)
     }
     return new GoogleGenerativeAI(geminiConfig.apiKey)
   }

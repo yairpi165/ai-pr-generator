@@ -1,24 +1,9 @@
 import fs from 'fs'
-import { outputPath, aiConfig } from './config.js'
-import { generateDiff } from './git.js'
-import type { PRResult } from './types.js'
-import { createProviderManager } from './providers/manager.js'
-
-/**
- * PR Generation Configuration
- */
-export interface PRGenerationConfig {
-  readonly aiManager: ReturnType<typeof createProviderManager>
-  readonly outputPath: string
-}
-
-/**
- * PR Title and Ticket Information
- */
-export interface PRTitleInfo {
-  readonly title: string
-  readonly ticket: string
-}
+import { outputPath } from '../config/index.js'
+import { aiConfig } from '../config/index.js'
+import { generateDiff } from '../git/index.js'
+import type { PRResult, PRGenerationConfig, PRTitleInfo } from './types.js'
+import { createProviderManager } from '../ai/index.js'
 
 /**
  * Create PR generator configuration
