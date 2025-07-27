@@ -26,10 +26,15 @@ const parseArguments = (): { provider?: string; remainingArgs: string[] } => {
     remainingArgs: [],
   }
 
-  // Check for provider selection flag
-  if (args[0] === '--provider' && args[1]) {
-    config.provider = args[1]
-    config.remainingArgs = args.slice(2) // Get remaining args after --provider
+  // Find --provider flag anywhere in the arguments
+  const providerIndex = args.findIndex(arg => arg === '--provider')
+  if (providerIndex !== -1 && args[providerIndex + 1]) {
+    config.provider = args[providerIndex + 1]
+    // Remove --provider and its value from args
+    config.remainingArgs = [
+      ...args.slice(0, providerIndex),
+      ...args.slice(providerIndex + 2),
+    ]
   } else {
     config.remainingArgs = args
   }
@@ -40,9 +45,10 @@ const parseArguments = (): { provider?: string; remainingArgs: string[] } => {
 /**
  * Parse input from command line or interactive prompts
  */
-const parseInput = async (): Promise<PROptions> => {
-  const config = parseArguments()
-
+const parseInput = async (config: {
+  provider?: string
+  remainingArgs: string[]
+}): Promise<PROptions> => {
   // If provider is specified, validate it (this would need to be implemented)
   if (config.provider) {
     console.log(`Using provider: ${config.provider}`)
@@ -74,7 +80,8 @@ const runCLI = async (): Promise<void> => {
     loadReviewersConfig()
 
     // Parse command line arguments or get interactive input
-    const options = await parseInput()
+    const config = parseArguments()
+    const options = await parseInput(config)
 
     // Display selected options
     displayOptions(options, getCurrentProvider())
@@ -87,12 +94,17 @@ const runCLI = async (): Promise<void> => {
       options.prType,
       options.prTitle,
       options.ticket,
-      options.explanation
+      options.explanation,
+      config.provider
     )
 
     // Save and display result
     const savedPath = savePRToFile(result.fullDescription)
-    displayResult(result.fullDescription, savedPath, getCurrentProvider())
+    displayResult(
+      result.fullDescription,
+      savedPath,
+      config.provider || getCurrentProvider()
+    )
 
     // Handle output options
     await handleOutputOptions(outputPath, result.title, result.body)

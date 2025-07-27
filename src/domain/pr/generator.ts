@@ -109,10 +109,14 @@ ${diff}
 const generateAITitle = async (
   config: PRGenerationConfig,
   diff: string,
-  explanation: string
+  explanation: string,
+  provider?: string
 ): Promise<string> => {
   const titlePrompt = buildTitlePrompt(diff, explanation)
-  const titleResponse = await config.aiManager.generateContent(titlePrompt)
+
+  const titleResponse = provider
+    ? await config.aiManager.generateContentWithProvider(provider, titlePrompt)
+    : await config.aiManager.generateContent(titlePrompt)
   return titleResponse.text.trim().replace(/^["']|["']$/g, '')
 }
 
@@ -122,10 +126,17 @@ const generateAITitle = async (
 const generateAIDescription = async (
   config: PRGenerationConfig,
   diff: string,
-  explanation: string
+  explanation: string,
+  provider?: string
 ): Promise<string> => {
   const descriptionPrompt = buildDescriptionPrompt(diff, explanation)
-  const response = await config.aiManager.generateContent(descriptionPrompt)
+
+  const response = provider
+    ? await config.aiManager.generateContentWithProvider(
+        provider,
+        descriptionPrompt
+      )
+    : await config.aiManager.generateContent(descriptionPrompt)
   return response.text.trim()
 }
 
@@ -148,7 +159,8 @@ export const generatePRDescription = async (
   prType: string,
   prTitle: string,
   ticket: string,
-  explanation: string
+  explanation: string,
+  provider?: string
 ): Promise<PRResult> => {
   const config = createPRGenerator()
 
@@ -162,14 +174,19 @@ export const generatePRDescription = async (
 
   // Generate AI title if needed
   if (!finalTitle) {
-    finalTitle = await generateAITitle(config, diff, explanation)
+    finalTitle = await generateAITitle(config, diff, explanation, provider)
   }
 
   // Build final title
   const formattedTitle = formatPRTitle(prType, finalTitle, finalTicket)
 
   // Generate description
-  const prBody = await generateAIDescription(config, diff, explanation)
+  const prBody = await generateAIDescription(
+    config,
+    diff,
+    explanation,
+    provider
+  )
 
   // Combine title and description
   const fullDescription = `# 🔖 ${formattedTitle}\n\n${prBody}`
