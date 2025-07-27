@@ -32,7 +32,8 @@ yarn build
 echo "🔑 Installing CLI globally..."
 yarn link
 
-ALIAS_CMD="genpr"
+# Ensure the CLI has execute permissions
+chmod +x dist/cli.js
 
 # Setup environment file
 ENV_FILE="$SCRIPT_DIR/.env"
@@ -133,14 +134,14 @@ elif [ -f "$HOME/.bash_profile" ]; then
 fi
 
 if [ -n "$SHELL_CONFIG" ]; then
-    ALIAS_LINE="alias genpr=\"$ALIAS_CMD\""
-    
-    if ! grep -q "alias genpr=" "$SHELL_CONFIG"; then
-        echo "$ALIAS_LINE" >> "$SHELL_CONFIG"
-        echo "✅ Added 'genpr' alias to $SHELL_CONFIG"
-        echo "   Please restart your terminal or run: source $SHELL_CONFIG"
+    # Check if genpr command is available globally after yarn link
+    if command -v genpr &> /dev/null; then
+        echo "✅ 'genpr' command is available globally"
+        echo "   No alias needed - you can use 'genpr' directly"
     else
-        echo "✅ 'genpr' alias already exists in $SHELL_CONFIG"
+        echo "⚠️  'genpr' command not found globally"
+        echo "   You may need to restart your terminal or run:"
+        echo "   source $SHELL_CONFIG"
     fi
 else
     echo "⚠️  Could not find shell config file. Please add manually:"
@@ -155,4 +156,5 @@ echo "Usage:"
 echo "  genpr                    # Interactive mode"
 echo "  genpr feat 'Add feature' # One-liner mode"
 echo ""
-echo "Make sure to restart your terminal or run: source $SHELL_CONFIG"
+echo "If 'genpr' command is not found, restart your terminal or run:"
+echo "  source $SHELL_CONFIG"
