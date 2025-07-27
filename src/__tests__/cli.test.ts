@@ -89,9 +89,9 @@ describe('CLI', () => {
       const cliContent = fs.readFileSync(cliPath, 'utf8')
 
       // Check that positional arguments are handled
-      expect(cliContent).toMatch(/args\.length > 0/)
-      expect(cliContent).toMatch(/prType: args\[0\]/)
-      expect(cliContent).toMatch(/prTitle: args\[1\]/)
+      expect(cliContent).toMatch(/remainingArgs\.length > 0/)
+      expect(cliContent).toMatch(/prType: remainingArgs\[0\]/)
+      expect(cliContent).toMatch(/prTitle: remainingArgs\[1\]/)
     })
 
     it('should fall back to interactive input when no args', () => {

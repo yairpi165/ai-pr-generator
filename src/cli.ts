@@ -20,14 +20,18 @@ import {
 /**
  * Parse command line arguments
  */
-const parseArguments = (): { provider?: string } => {
+const parseArguments = (): { provider?: string; remainingArgs: string[] } => {
   const args = process.argv.slice(2)
-  const config: { provider?: string } = {}
+  const config: { provider?: string; remainingArgs: string[] } = {
+    remainingArgs: [],
+  }
 
   // Check for provider selection flag
   if (args[0] === '--provider' && args[1]) {
     config.provider = args[1]
-    args.splice(0, 2) // Remove provider args
+    config.remainingArgs = args.slice(2) // Get remaining args after --provider
+  } else {
+    config.remainingArgs = args
   }
 
   return config
@@ -37,7 +41,6 @@ const parseArguments = (): { provider?: string } => {
  * Parse input from command line or interactive prompts
  */
 const parseInput = async (): Promise<PROptions> => {
-  const args = process.argv.slice(2)
   const config = parseArguments()
 
   // If provider is specified, validate it (this would need to be implemented)
@@ -45,10 +48,13 @@ const parseInput = async (): Promise<PROptions> => {
     console.log(`Using provider: ${config.provider}`)
   }
 
-  if (args.length > 0) {
+  // Use remaining arguments (after --provider flag) for PR options
+  const remainingArgs = config.remainingArgs
+
+  if (remainingArgs.length > 0) {
     return {
-      prType: args[0],
-      prTitle: args[1] || '',
+      prType: remainingArgs[0],
+      prTitle: remainingArgs[1] || '',
       ticket: '',
       explanation: '',
     }
