@@ -15,8 +15,13 @@ export const AI_CONSTANTS = {
 
   // Info messages
   INFO: {
-    PROVIDER_FAILED: 'Provider {provider} failed:',
+    PROVIDER_FAILED: '❌ Provider {provider} failed:',
     TRYING_NEXT_PROVIDER: 'Trying next available provider...',
+    USING_DEFAULT_PROVIDER: 'Using default provider: {provider}',
+    FALLBACK_TO_PROVIDER: 'Falling back to: {provider}',
+    PROVIDER_SUCCESS: '✅ Successfully generated content with {provider}',
+    ALL_PROVIDERS_FAILED:
+      '❌ All available AI providers failed to generate content.',
   },
 
   // API endpoints

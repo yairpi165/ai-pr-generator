@@ -13,7 +13,7 @@ import type {
 export const createOpenAIProvider = (config: AIConfig): AIProvider => {
   const openAIConfig: OpenAIConfig = {
     apiKey: config.openaiApiKey as string,
-    model: AI_CONSTANTS.MODELS.OPENAI.DEFAULT,
+    model: config.openaiModel || AI_CONSTANTS.MODELS.OPENAI.DEFAULT,
     temperature: AI_CONSTANTS.MODELS.OPENAI.TEMPERATURE,
   }
 

@@ -285,6 +285,41 @@ Binary files a/image.png and b/image.png differ`
         GIT_CONSTANTS.ERRORS.NOT_GIT_REPO
       )
     })
+
+    it('should propagate generic errors from git commands', () => {
+      mockGetGitRepository.mockImplementation(() => {
+        throw new Error('Generic git error')
+      })
+
+      expect(() => checkGitRepository()).toThrow('Generic git error')
+    })
+  })
+
+  describe('Error handling in diff functions', () => {
+    it('should handle generic errors in getStagedChanges', () => {
+      mockExecSync.mockImplementation(() => {
+        throw new Error('Generic error')
+      })
+
+      expect(() => generateDiffContent()).toThrow('Generic error')
+    })
+
+    it('should handle generic errors in checkGitChanges', () => {
+      // Mock getGitRepository to return a valid repo
+      mockGetGitRepository.mockReturnValue({
+        root: '/test/repo',
+        currentBranch: 'feature/branch',
+        defaultBranch: 'main',
+        remoteUrl: 'https://github.com/test/repo.git',
+      })
+
+      // Mock getGitStatus to throw error
+      mockGetGitStatus.mockImplementation(() => {
+        throw new Error('Generic error')
+      })
+
+      expect(() => checkGitChanges()).toThrow('Generic error')
+    })
   })
 
   describe('checkGitChanges', () => {
@@ -368,6 +403,32 @@ Binary files a/image.png and b/image.png differ`
       })
 
       expect(() => checkGitChanges()).toThrow('Permission denied')
+    })
+
+    it('should handle non-Error exceptions in checkGitRepository', () => {
+      mockGetGitRepository.mockImplementation(() => {
+        throw 'String error from git'
+      })
+
+      expect(() => checkGitRepository()).toThrow('String error from git')
+    })
+
+    it('should handle non-Error exceptions in checkGitChanges', () => {
+      mockGetGitRepository.mockReturnValue(mockRepo)
+      mockGetGitStatus.mockImplementation(() => {
+        throw 'String error from status'
+      })
+
+      expect(() => checkGitChanges()).toThrow('String error from status')
+    })
+
+    it('should handle non-Error exceptions in checkGitChanges with unknown error type', () => {
+      const objectError = { message: 'Object error' }
+      mockGetGitRepository.mockImplementation(() => {
+        throw objectError
+      })
+
+      expect(() => checkGitChanges()).toThrow()
     })
   })
 

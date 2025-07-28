@@ -13,7 +13,7 @@ import type {
 export const createGeminiProvider = (config: AIConfig): AIProvider => {
   const geminiConfig: GeminiConfig = {
     apiKey: config.geminiApiKey as string,
-    model: AI_CONSTANTS.MODELS.GEMINI.DEFAULT,
+    model: config.geminiModel || AI_CONSTANTS.MODELS.GEMINI.DEFAULT,
   }
 
   /**

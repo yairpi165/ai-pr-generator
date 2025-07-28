@@ -17,23 +17,54 @@ import {
   UI_CONSTANTS,
 } from './domain/index.js'
 import { runInit } from './commands/init.js'
+import { runConfig } from './commands/config.js'
 
 /**
- * Parse command line arguments
+ * Helper function to extract flag value from arguments
  */
+const extractFlagValue = (
+  args: string[],
+  flags: string[]
+): { value?: string; remainingArgs: string[] } => {
+  const flagIndex = args.findIndex(arg => flags.includes(arg))
+  if (flagIndex === -1 || flagIndex + 1 >= args.length) {
+    return { remainingArgs: args }
+  }
+
+  const value = args[flagIndex + 1]
+  const remainingArgs = args.filter(
+    (_, index) => index !== flagIndex && index !== flagIndex + 1
+  )
+
+  return { value, remainingArgs }
+}
+
+/**
+ * Helper function to check if any flag exists in arguments
+ */
+const hasFlag = (args: string[], flags: string[]): boolean => {
+  return args.some(arg => flags.includes(arg))
+}
+
 export const parseArguments = (
   args: string[] = process.argv.slice(2)
-): { command?: string; provider?: string; remainingArgs: string[] } => {
+): {
+  command?: string
+  provider?: string
+  configAction?: 'view' | 'edit' | 'reset'
+  remainingArgs: string[]
+} => {
   const config: {
     command?: string
     provider?: string
+    configAction?: 'view' | 'edit' | 'reset'
     remainingArgs: string[]
   } = {
     remainingArgs: [],
   }
 
   // Handle version flag early
-  if (args.includes('--version') || args.includes('-v')) {
+  if (hasFlag(args, ['--version', '-v'])) {
     console.log(
       `ai-pr-generator v${process.env.npm_package_version || '1.0.0'}`
     )
@@ -47,18 +78,32 @@ export const parseArguments = (
     return config
   }
 
-  // Handle provider flag
-  const providerIndex = args.findIndex(
-    arg => arg === '--provider' || arg === '-p'
-  )
-  if (providerIndex !== -1 && providerIndex + 1 < args.length) {
-    config.provider = args[providerIndex + 1]
-    config.remainingArgs = args.filter(
-      (_, index) => index !== providerIndex && index !== providerIndex + 1
-    )
-  } else {
-    config.remainingArgs = args
+  // Handle config command
+  if (args.length > 0 && args[0] === 'config') {
+    config.command = 'config'
+
+    // Parse config action using the same pattern as provider flags
+    const { value: action, remainingArgs } = extractFlagValue(args.slice(1), [
+      '--action',
+      '-a',
+    ])
+    if (action && ['view', 'edit', 'reset'].includes(action)) {
+      config.configAction = action as 'view' | 'edit' | 'reset'
+    }
+    config.remainingArgs = remainingArgs
+
+    return config
   }
+
+  // Handle provider flag
+  const { value: provider, remainingArgs } = extractFlagValue(args, [
+    '--provider',
+    '-p',
+  ])
+  if (provider) {
+    config.provider = provider
+  }
+  config.remainingArgs = remainingArgs
 
   return config
 }
@@ -127,6 +172,12 @@ const runCLI = async (): Promise<void> => {
       return
     }
 
+    // Handle config command early - this prevents config from reaching parseInput
+    if (config.command === 'config') {
+      await runConfig({ action: config.configAction })
+      return
+    }
+
     console.log(chalk.blue.bold(`${UI_CONSTANTS.MESSAGES.WELCOME}\n`))
 
     // Load reviewers configuration
@@ -164,6 +215,9 @@ const runCLI = async (): Promise<void> => {
     process.exit(1)
   }
 }
+
+// Export runCLI for testing
+export { runCLI }
 
 // Run the CLI
 runCLI().catch(error =>

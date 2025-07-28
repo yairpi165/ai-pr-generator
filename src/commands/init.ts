@@ -6,6 +6,7 @@ import path from 'path'
 import { execSync } from 'child_process'
 import inquirer from 'inquirer'
 import type { InitOptions } from './types.js'
+import { selectAIModels } from './shared.js'
 
 /**
  * Check if Node.js is installed and has correct version
@@ -130,6 +131,31 @@ const createEnvFile = async (options: InitOptions): Promise<void> => {
     if (geminiKey) {
       envContent += `GEMINI_API_KEY=${geminiKey}\n`
       console.log(chalk.green('✅ Gemini API key saved'))
+    }
+
+    // AI Models Setup
+    console.log('')
+    console.log(chalk.cyan('2️⃣  AI Models Setup'))
+    console.log(chalk.cyan('=================='))
+    console.log('Choose your preferred AI models:')
+    console.log('')
+
+    const { openaiModel, geminiModel, defaultProvider } = await selectAIModels()
+
+    // Save model configurations
+    if (openaiKey) {
+      envContent += `OPENAI_MODEL=${openaiModel}\n`
+      console.log(chalk.green(`✅ OpenAI model set to: ${openaiModel}`))
+    }
+
+    if (geminiKey) {
+      envContent += `GEMINI_MODEL=${geminiModel}\n`
+      console.log(chalk.green(`✅ Gemini model set to: ${geminiModel}`))
+    }
+
+    if (defaultProvider) {
+      envContent += `DEFAULT_PROVIDER=${defaultProvider}\n`
+      console.log(chalk.green(`✅ Default provider set to: ${defaultProvider}`))
     }
 
     // Bitbucket setup

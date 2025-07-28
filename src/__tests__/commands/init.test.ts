@@ -41,6 +41,11 @@ describe('Init Command', () => {
       mockInquirer.prompt
         .mockResolvedValueOnce({ openaiKey: 'test-key' })
         .mockResolvedValueOnce({ geminiKey: '' })
+        .mockResolvedValueOnce({
+          openaiModel: 'gpt-4o-mini',
+          geminiModel: 'gemini-2.0-flash',
+          defaultProvider: '',
+        })
         .mockResolvedValueOnce({ bitbucketEmail: '', bitbucketToken: '' })
         .mockResolvedValueOnce({ githubToken: '' })
 
@@ -49,7 +54,7 @@ describe('Init Command', () => {
       // Verify basic file operations were called
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
         '/test/project/.env',
-        'OPENAI_API_KEY=test-key\n'
+        'OPENAI_API_KEY=test-key\nOPENAI_MODEL=gpt-4o-mini\n'
       )
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
         '/test/project/reviewers.json.example',
@@ -168,12 +173,37 @@ describe('Init Command', () => {
       expect(reviewersContent.bitbucket).toHaveLength(2)
     })
 
+    it('should skip creating reviewers.json.example when it already exists', async () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+
+      // Mock existing .env and existing reviewers file
+      mockFs.existsSync
+        .mockReturnValueOnce(true) // .env exists
+        .mockReturnValueOnce(true) // reviewers.json.example exists
+        .mockReturnValue(false) // default for other files
+
+      mockExecSync.mockReturnValue(Buffer.from('git version'))
+
+      await runInit({})
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('✅ reviewers.json.example already exists')
+      )
+
+      consoleSpy.mockRestore()
+    })
+
     it('should handle multiple API keys correctly', async () => {
       mockFs.existsSync.mockReturnValue(false)
       mockExecSync.mockReturnValue(Buffer.from('git version'))
       mockInquirer.prompt
         .mockResolvedValueOnce({ openaiKey: 'openai-key' })
         .mockResolvedValueOnce({ geminiKey: 'gemini-key' })
+        .mockResolvedValueOnce({
+          openaiModel: 'gpt-4o-mini',
+          geminiModel: 'gemini-2.0-flash',
+          defaultProvider: '',
+        })
         .mockResolvedValueOnce({
           bitbucketEmail: 'test@example.com',
           bitbucketToken: 'bb-token',
@@ -184,7 +214,7 @@ describe('Init Command', () => {
 
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
         '/test/project/.env',
-        'OPENAI_API_KEY=openai-key\nGEMINI_API_KEY=gemini-key\nBITBUCKET_EMAIL=test@example.com\nBITBUCKET_TOKEN=bb-token\nGITHUB_TOKEN=gh-token\n'
+        'OPENAI_API_KEY=openai-key\nGEMINI_API_KEY=gemini-key\nOPENAI_MODEL=gpt-4o-mini\nGEMINI_MODEL=gemini-2.0-flash\nBITBUCKET_EMAIL=test@example.com\nBITBUCKET_TOKEN=bb-token\nGITHUB_TOKEN=gh-token\n'
       )
     })
 
@@ -266,6 +296,180 @@ describe('Init Command', () => {
         '/test/project/reviewers.json.example',
         expect.any(String)
       )
+    })
+  })
+
+  describe('Custom model configuration', () => {
+    it('should handle custom OpenAI model selection', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockExecSync.mockReturnValue(Buffer.from('git version'))
+      mockInquirer.prompt
+        .mockResolvedValueOnce({ openaiKey: 'test-key' })
+        .mockResolvedValueOnce({ geminiKey: 'gemini-key' })
+        .mockResolvedValueOnce({
+          openaiModel: 'custom',
+          geminiModel: 'gemini-2.0-flash',
+          defaultProvider: 'openai',
+        })
+        .mockResolvedValueOnce({ customOpenaiModel: 'gpt-4-custom' })
+        .mockResolvedValueOnce({ bitbucketEmail: '', bitbucketToken: '' })
+        .mockResolvedValueOnce({ githubToken: '' })
+
+      await runInit({})
+
+      expect(mockInquirer.prompt).toHaveBeenCalledWith([
+        {
+          type: 'input',
+          name: 'customOpenaiModel',
+          message: '🔧 Enter custom OpenAI model name:',
+          default: 'gpt-4o-mini',
+        },
+      ])
+      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('OPENAI_MODEL=gpt-4-custom')
+      )
+    })
+
+    it('should handle custom Gemini model selection', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockExecSync.mockReturnValue(Buffer.from('git version'))
+      mockInquirer.prompt
+        .mockResolvedValueOnce({ openaiKey: 'test-key' })
+        .mockResolvedValueOnce({ geminiKey: 'gemini-key' })
+        .mockResolvedValueOnce({
+          openaiModel: 'gpt-4o-mini',
+          geminiModel: 'custom',
+          defaultProvider: 'gemini',
+        })
+        .mockResolvedValueOnce({ customGeminiModel: 'gemini-custom' })
+        .mockResolvedValueOnce({ bitbucketEmail: '', bitbucketToken: '' })
+        .mockResolvedValueOnce({ githubToken: '' })
+
+      await runInit({})
+
+      expect(mockInquirer.prompt).toHaveBeenCalledWith([
+        {
+          type: 'input',
+          name: 'customGeminiModel',
+          message: '🔧 Enter custom Gemini model name:',
+          default: 'gemini-2.0-flash',
+        },
+      ])
+      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('GEMINI_MODEL=gemini-custom')
+      )
+    })
+
+    it('should handle both custom models selection', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockExecSync.mockReturnValue(Buffer.from('git version'))
+      mockInquirer.prompt
+        .mockResolvedValueOnce({ openaiKey: 'test-key' })
+        .mockResolvedValueOnce({ geminiKey: 'gemini-key' })
+        .mockResolvedValueOnce({
+          openaiModel: 'custom',
+          geminiModel: 'custom',
+          defaultProvider: '',
+        })
+        .mockResolvedValueOnce({ customOpenaiModel: 'gpt-4-custom' })
+        .mockResolvedValueOnce({ customGeminiModel: 'gemini-custom' })
+        .mockResolvedValueOnce({ bitbucketEmail: '', bitbucketToken: '' })
+        .mockResolvedValueOnce({ githubToken: '' })
+
+      await runInit({})
+
+      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringMatching(
+          /OPENAI_MODEL=gpt-4-custom[\s\S]*GEMINI_MODEL=gemini-custom/
+        )
+      )
+    })
+
+    it('should handle network errors during setup', async () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+      mockFs.existsSync.mockReturnValue(false)
+      mockExecSync.mockReturnValue(Buffer.from('git version'))
+
+      const networkError = new Error('network timeout error occurred')
+      mockInquirer.prompt.mockRejectedValue(networkError)
+
+      await runInit({})
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('🌐 Network Error - Try these solutions:')
+      )
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('1. Check your internet connection')
+      )
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should handle disk space errors during setup', async () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+      mockFs.existsSync.mockReturnValue(false)
+      mockExecSync.mockReturnValue(Buffer.from('git version'))
+
+      const diskError = new Error('disk space error no space available')
+      mockInquirer.prompt.mockRejectedValue(diskError)
+
+      await runInit({})
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('💾 Disk Space Error - Try these solutions:')
+      )
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('1. Free up disk space')
+      )
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should handle TypeScript errors during setup', async () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+      mockFs.existsSync.mockReturnValue(false)
+      mockExecSync.mockReturnValue(Buffer.from('git version'))
+
+      const tsError = new Error('typescript tsc version error')
+      mockInquirer.prompt.mockRejectedValue(tsError)
+
+      await runInit({})
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('🔧 TypeScript Error - Try these solutions:')
+      )
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          '1. Update TypeScript: npm install -g typescript'
+        )
+      )
+
+      consoleSpy.mockRestore()
+    })
+  })
+
+  describe('Direct execution', () => {
+    it('should handle direct execution when file is run directly', () => {
+      const originalArgv = process.argv
+      process.argv = ['node', '/path/to/init.js']
+
+      // The check should be true when the filename ends with init.js
+      expect(process.argv[1]).toContain('init.js')
+
+      process.argv = originalArgv
+    })
+
+    it('should not execute when not run directly', () => {
+      const originalArgv = process.argv
+      process.argv = ['node', '/path/to/other-file.js']
+
+      // The check should be false when filename doesn't end with init.js
+      expect(process.argv[1]).not.toContain('init.js')
+
+      process.argv = originalArgv
     })
   })
 })

@@ -478,5 +478,30 @@ This PR enhances the feature functionality with improved implementation.
         expect(result.title).toContain('fix')
       }
     })
+
+    it('should use specific provider when provided', async () => {
+      const specificProvider = 'openai'
+      // Mock generateContentWithProvider method
+      mockProviderManager.generateContentWithProvider = jest
+        .fn()
+        .mockResolvedValueOnce(mockTitleResponse)
+        .mockResolvedValueOnce(mockDescriptionResponse)
+
+      const result = await generatePRDescription(
+        'feat',
+        '',
+        '',
+        'explanation',
+        specificProvider
+      )
+
+      expect(
+        mockProviderManager.generateContentWithProvider
+      ).toHaveBeenCalledTimes(2)
+      expect(
+        mockProviderManager.generateContentWithProvider
+      ).toHaveBeenCalledWith(specificProvider, expect.any(String))
+      expect(result.title).toBe('feat: Add enhanced feature functionality')
+    })
   })
 })
