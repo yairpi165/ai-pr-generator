@@ -6,6 +6,12 @@ import path from 'path'
 import inquirer from 'inquirer'
 import dotenv from 'dotenv'
 import { AI_CONSTANTS } from '../domain/ai/constants.js'
+import {
+  selectAIModels,
+  handleConfigActions,
+  confirmReset,
+  displayConfigUpdateSuccess,
+} from './shared.js'
 
 interface SettingsOptions {
   action?: 'view' | 'edit' | 'reset'
@@ -125,8 +131,8 @@ const editAIProviderKeys = async (
   ])
 
   const newConfig = { ...currentConfig }
-  if (openaiKey) newConfig.OPENAI_API_KEY = openaiKey
-  if (geminiKey) newConfig.GEMINI_API_KEY = geminiKey
+  newConfig.OPENAI_API_KEY = openaiKey
+  newConfig.GEMINI_API_KEY = geminiKey
 
   return newConfig
 }
@@ -140,75 +146,15 @@ const editAIModels = async (currentConfig: EnvConfig): Promise<EnvConfig> => {
   console.log(chalk.cyan('=========================='))
   console.log('')
 
-  const { openaiModel, geminiModel, defaultProvider } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'openaiModel',
-      message: '🤖 Select OpenAI Model:',
-      choices: [
-        { name: 'GPT-4o Mini (Fast & Cheap)', value: 'gpt-4o-mini' },
-        { name: 'GPT-4o (Best Quality)', value: 'gpt-4o' },
-        { name: 'GPT-4 Turbo (Balanced)', value: 'gpt-4-turbo' },
-        { name: 'Custom Model', value: 'custom' },
-      ],
-      default: currentConfig.OPENAI_MODEL || 'gpt-4o-mini',
-    },
-    {
-      type: 'list',
-      name: 'geminiModel',
-      message: '🤖 Select Gemini Model:',
-      choices: [
-        { name: 'Gemini 2.0 Flash (Fast)', value: 'gemini-2.0-flash' },
-        { name: 'Gemini 2.0 Pro (Best Quality)', value: 'gemini-2.0-pro' },
-        { name: 'Gemini 1.5 Pro (Balanced)', value: 'gemini-1.5-pro' },
-        { name: 'Custom Model', value: 'custom' },
-      ],
-      default: currentConfig.GEMINI_MODEL || 'gemini-2.0-flash',
-    },
-    {
-      type: 'list',
-      name: 'defaultProvider',
-      message: '🎯 Default AI Provider:',
-      choices: [
-        { name: 'Auto-select (Recommended)', value: '' },
-        { name: 'OpenAI (GPT)', value: 'openai' },
-        { name: 'Gemini', value: 'gemini' },
-      ],
-      default: currentConfig.DEFAULT_PROVIDER || '',
-    },
-  ])
-
-  // Handle custom model inputs
-  let finalOpenaiModel = openaiModel
-  let finalGeminiModel = geminiModel
-
-  if (openaiModel === 'custom') {
-    const { customOpenaiModel } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'customOpenaiModel',
-        message: '🔧 Enter custom OpenAI model name:',
-        default: currentConfig.OPENAI_MODEL || 'gpt-4o-mini',
-      },
-    ])
-    finalOpenaiModel = customOpenaiModel
-  }
-
-  if (geminiModel === 'custom') {
-    const { customGeminiModel } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'customGeminiModel',
-        message: '🔧 Enter custom Gemini model name:',
-        default: currentConfig.GEMINI_MODEL || 'gemini-2.0-flash',
-      },
-    ])
-    finalGeminiModel = customGeminiModel
-  }
+  const { openaiModel, geminiModel, defaultProvider } = await selectAIModels({
+    openaiModel: currentConfig.OPENAI_MODEL,
+    geminiModel: currentConfig.GEMINI_MODEL,
+    defaultProvider: currentConfig.DEFAULT_PROVIDER,
+  })
 
   const newConfig = { ...currentConfig }
-  newConfig.OPENAI_MODEL = finalOpenaiModel
-  newConfig.GEMINI_MODEL = finalGeminiModel
+  newConfig.OPENAI_MODEL = openaiModel
+  newConfig.GEMINI_MODEL = geminiModel
   newConfig.DEFAULT_PROVIDER = defaultProvider
 
   return newConfig
@@ -314,95 +260,27 @@ export const runConfig = async (
 
     const currentConfig = loadEnvConfig()
 
-    if (options.action === 'view' || Object.keys(options).length === 0) {
-      displayCurrentConfig(currentConfig)
-      return
-    }
-
-    if (options.action === 'edit') {
-      const newConfig = await editConfiguration(currentConfig)
-      saveEnvConfig(newConfig)
-
-      console.log('')
-      console.log(chalk.green.bold('✅ Configuration updated!'))
-      console.log(chalk.green('=========================='))
-      console.log('')
-      console.log('Your new settings:')
-      displayCurrentConfig(newConfig)
-      return
-    }
-
-    if (options.action === 'reset') {
-      const { confirm } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'confirm',
-          message: '⚠️  Are you sure you want to reset all configuration?',
-          default: false,
-        },
-      ])
-
-      if (confirm) {
-        const envPath = path.join(process.cwd(), '.env')
-        if (fs.existsSync(envPath)) {
-          fs.unlinkSync(envPath)
-          console.log(chalk.green('✅ Configuration reset!'))
-          console.log(chalk.yellow('Run "genpr init" to set up again.'))
-        } else {
-          console.log(chalk.yellow('ℹ️  No configuration file found.'))
-        }
-      }
-      return
-    }
-
-    // Interactive mode
-    const { action } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'action',
-        message: 'What would you like to do?',
-        choices: [
-          { name: '📋 View current configuration', value: 'view' },
-          { name: '✏️  Edit configuration', value: 'edit' },
-          { name: '🔄 Reset configuration', value: 'reset' },
-          { name: '❌ Cancel', value: 'cancel' },
-        ],
+    await handleConfigActions(options, {
+      view: () => displayCurrentConfig(currentConfig),
+      edit: async () => {
+        const newConfig = await editConfiguration(currentConfig)
+        saveEnvConfig(newConfig)
+        displayConfigUpdateSuccess(() => displayCurrentConfig(newConfig))
       },
-    ])
-
-    if (action === 'view') {
-      displayCurrentConfig(currentConfig)
-    } else if (action === 'edit') {
-      const newConfig = await editConfiguration(currentConfig)
-      saveEnvConfig(newConfig)
-
-      console.log('')
-      console.log(chalk.green.bold('✅ Configuration updated!'))
-      console.log(chalk.green('=========================='))
-      console.log('')
-      console.log('Your new settings:')
-      displayCurrentConfig(newConfig)
-    } else if (action === 'reset') {
-      const { confirm } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'confirm',
-          message: '⚠️  Are you sure you want to reset all configuration?',
-          default: false,
-        },
-      ])
-
-      if (confirm) {
-        const envPath = path.join(process.cwd(), '.env')
-        if (fs.existsSync(envPath)) {
-          fs.unlinkSync(envPath)
-          console.log(chalk.green('✅ Configuration reset!'))
-          console.log(chalk.yellow('Run "genpr init" to set up again.'))
-        } else {
-          console.log(chalk.yellow('ℹ️  No configuration file found.'))
+      reset: async () => {
+        const confirm = await confirmReset()
+        if (confirm) {
+          const envPath = path.join(process.cwd(), '.env')
+          if (fs.existsSync(envPath)) {
+            fs.unlinkSync(envPath)
+            console.log(chalk.green('✅ Configuration reset!'))
+            console.log(chalk.yellow('Run "genpr init" to set up again.'))
+          } else {
+            console.log(chalk.yellow('ℹ️  No configuration file found.'))
+          }
         }
-      }
-    }
+      },
+    })
   } catch (error) {
     console.log(chalk.red('❌ Settings failed:'))
     console.log(

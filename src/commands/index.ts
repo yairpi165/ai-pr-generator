@@ -1,2 +1,2 @@
-export { runInit } from './init'
-export { runConfig } from './config'
+export { runInit } from './init.js'
+export { runConfig } from './config.js'

@@ -155,10 +155,10 @@ describe('AI Provider Manager', () => {
         testPrompt
       )
       expect(consoleSpy).toHaveBeenCalledWith(
-        `${AI_CONSTANTS.INFO.TRYING_NEXT_PROVIDER} OpenAI`
+        AI_CONSTANTS.INFO.FALLBACK_TO_PROVIDER.replace('{provider}', 'OpenAI')
       )
       expect(consoleSpy).toHaveBeenCalledWith(
-        `${AI_CONSTANTS.INFO.PROVIDER_FAILED} OpenAI: OpenAI API error`
+        expect.stringContaining('❌ Provider OpenAI failed: OpenAI API error')
       )
 
       consoleSpy.mockRestore()
@@ -305,7 +305,10 @@ describe('AI Provider Manager', () => {
         testPrompt
       )
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Trying next available provider...')
+        AI_CONSTANTS.INFO.USING_DEFAULT_PROVIDER.replace('{provider}', 'OpenAI')
+      )
+      expect(consoleSpy).toHaveBeenCalledWith(
+        AI_CONSTANTS.INFO.PROVIDER_SUCCESS.replace('{provider}', 'OpenAI')
       )
 
       consoleSpy.mockRestore()
@@ -342,9 +345,7 @@ describe('AI Provider Manager', () => {
         testPrompt
       )
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Provider {provider} failed: OpenAI: OpenAI failed'
-        )
+        expect.stringContaining('❌ Provider OpenAI failed: OpenAI failed')
       )
 
       consoleSpy.mockRestore()
@@ -375,9 +376,7 @@ describe('AI Provider Manager', () => {
 
       expect(result).toEqual(expectedResponse)
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Provider {provider} failed: OpenAI: String error'
-        )
+        expect.stringContaining('❌ Provider OpenAI failed: String error')
       )
 
       consoleSpy.mockRestore()

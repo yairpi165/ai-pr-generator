@@ -7,6 +7,7 @@ import type {
 } from './types.js'
 import { createGeminiProvider } from './providers/gemini.js'
 import { createOpenAIProvider } from './providers/openai.js'
+import chalk from 'chalk'
 
 /**
  * Provider Manager Factory
@@ -53,44 +54,97 @@ export const createProviderManager = (config: AIConfig) => {
       if (defaultProvider) {
         try {
           console.log(
-            `${AI_CONSTANTS.INFO.TRYING_NEXT_PROVIDER} ${defaultProvider.name}`
+            AI_CONSTANTS.INFO.USING_DEFAULT_PROVIDER.replace(
+              '{provider}',
+              defaultProvider.name
+            )
           )
-          return await defaultProvider.generateContent(prompt)
+          const result = await defaultProvider.generateContent(prompt)
+          console.log(
+            AI_CONSTANTS.INFO.PROVIDER_SUCCESS.replace(
+              '{provider}',
+              defaultProvider.name
+            )
+          )
+          return result
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error)
           console.log(
-            `${AI_CONSTANTS.INFO.PROVIDER_FAILED} ${defaultProvider.name}: ${errorMessage}`
+            chalk.red(
+              `${AI_CONSTANTS.INFO.PROVIDER_FAILED.replace('{provider}', defaultProvider.name)} ${errorMessage}`
+            )
           )
 
-          if (!managerConfig.fallbackEnabled) {
-            throw error instanceof Error ? error : new Error(String(error))
+          // Try other providers (excluding the default one)
+          const fallbackProviders = managerConfig.providers.filter(
+            p => p.name.toLowerCase() !== config.defaultProvider?.toLowerCase()
+          )
+
+          for (const provider of fallbackProviders) {
+            try {
+              console.log(
+                AI_CONSTANTS.INFO.FALLBACK_TO_PROVIDER.replace(
+                  '{provider}',
+                  provider.name
+                )
+              )
+              const result = await provider.generateContent(prompt)
+              console.log(
+                AI_CONSTANTS.INFO.PROVIDER_SUCCESS.replace(
+                  '{provider}',
+                  provider.name
+                )
+              )
+              return result
+            } catch (fallbackError) {
+              const fallbackErrorMessage =
+                fallbackError instanceof Error
+                  ? fallbackError.message
+                  : String(fallbackError)
+              console.log(
+                chalk.red(
+                  `${AI_CONSTANTS.INFO.PROVIDER_FAILED.replace('{provider}', provider.name)} ${fallbackErrorMessage}`
+                )
+              )
+            }
           }
+
+          console.log(chalk.red(AI_CONSTANTS.INFO.ALL_PROVIDERS_FAILED))
+          throw new Error(AI_CONSTANTS.ERRORS.ALL_PROVIDERS_FAILED)
         }
       }
     }
 
-    // Fallback to all providers in order
-    let lastError: Error | null = null
-
+    // No default provider or default provider not found, try all providers
     for (const provider of managerConfig.providers) {
       try {
         console.log(
-          `${AI_CONSTANTS.INFO.TRYING_NEXT_PROVIDER} ${provider.name}`
+          AI_CONSTANTS.INFO.FALLBACK_TO_PROVIDER.replace(
+            '{provider}',
+            provider.name
+          )
         )
-        return await provider.generateContent(prompt)
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error))
+        const result = await provider.generateContent(prompt)
         console.log(
-          `${AI_CONSTANTS.INFO.PROVIDER_FAILED} ${provider.name}: ${lastError.message}`
+          AI_CONSTANTS.INFO.PROVIDER_SUCCESS.replace(
+            '{provider}',
+            provider.name
+          )
         )
-
-        if (!managerConfig.fallbackEnabled) {
-          throw lastError
-        }
+        return result
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error)
+        console.log(
+          chalk.red(
+            `${AI_CONSTANTS.INFO.PROVIDER_FAILED.replace('{provider}', provider.name)} ${errorMessage}`
+          )
+        )
       }
     }
 
+    console.log(chalk.red(AI_CONSTANTS.INFO.ALL_PROVIDERS_FAILED))
     throw new Error(AI_CONSTANTS.ERRORS.ALL_PROVIDERS_FAILED)
   }
 

@@ -20,8 +20,32 @@ import { runInit } from './commands/init.js'
 import { runConfig } from './commands/config.js'
 
 /**
- * Parse command line arguments
+ * Helper function to extract flag value from arguments
  */
+const extractFlagValue = (
+  args: string[],
+  flags: string[]
+): { value?: string; remainingArgs: string[] } => {
+  const flagIndex = args.findIndex(arg => flags.includes(arg))
+  if (flagIndex === -1 || flagIndex + 1 >= args.length) {
+    return { remainingArgs: args }
+  }
+
+  const value = args[flagIndex + 1]
+  const remainingArgs = args.filter(
+    (_, index) => index !== flagIndex && index !== flagIndex + 1
+  )
+
+  return { value, remainingArgs }
+}
+
+/**
+ * Helper function to check if any flag exists in arguments
+ */
+const hasFlag = (args: string[], flags: string[]): boolean => {
+  return args.some(arg => flags.includes(arg))
+}
+
 export const parseArguments = (
   args: string[] = process.argv.slice(2)
 ): {
@@ -40,7 +64,7 @@ export const parseArguments = (
   }
 
   // Handle version flag early
-  if (args.includes('--version') || args.includes('-v')) {
+  if (hasFlag(args, ['--version', '-v'])) {
     console.log(
       `ai-pr-generator v${process.env.npm_package_version || '1.0.0'}`
     )
@@ -59,35 +83,25 @@ export const parseArguments = (
     config.command = 'config'
     config.remainingArgs = args.slice(1)
 
-    // Parse config options
+    // Parse config action
     const configArgs = args.slice(1)
-    if (configArgs.includes('--action') || configArgs.includes('-a')) {
-      const actionIndex = configArgs.findIndex(
-        arg => arg === '--action' || arg === '-a'
-      )
-      if (actionIndex !== -1 && actionIndex + 1 < configArgs.length) {
-        const action = configArgs[actionIndex + 1]
-        if (['view', 'edit', 'reset'].includes(action)) {
-          config.configAction = action as 'view' | 'edit' | 'reset'
-        }
-      }
+    const { value: action } = extractFlagValue(configArgs, ['--action', '-a'])
+    if (action && ['view', 'edit', 'reset'].includes(action)) {
+      config.configAction = action as 'view' | 'edit' | 'reset'
     }
 
     return config
   }
 
   // Handle provider flag
-  const providerIndex = args.findIndex(
-    arg => arg === '--provider' || arg === '-p'
-  )
-  if (providerIndex !== -1 && providerIndex + 1 < args.length) {
-    config.provider = args[providerIndex + 1]
-    config.remainingArgs = args.filter(
-      (_, index) => index !== providerIndex && index !== providerIndex + 1
-    )
-  } else {
-    config.remainingArgs = args
+  const { value: provider, remainingArgs } = extractFlagValue(args, [
+    '--provider',
+    '-p',
+  ])
+  if (provider) {
+    config.provider = provider
   }
+  config.remainingArgs = remainingArgs
 
   return config
 }
