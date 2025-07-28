@@ -245,7 +245,7 @@ describe('CLI Module', () => {
 
       expect(result.command).toBe('config')
       expect(result.configAction).toBe('view')
-      expect(result.remainingArgs).toEqual(['--action', 'view'])
+      expect(result.remainingArgs).toEqual([])
     })
 
     it('should parse config command with edit action using short flag', () => {
@@ -254,7 +254,7 @@ describe('CLI Module', () => {
 
       expect(result.command).toBe('config')
       expect(result.configAction).toBe('edit')
-      expect(result.remainingArgs).toEqual(['-a', 'edit'])
+      expect(result.remainingArgs).toEqual([])
     })
 
     it('should parse config command with reset action', () => {

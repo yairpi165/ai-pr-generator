@@ -81,14 +81,16 @@ export const parseArguments = (
   // Handle config command
   if (args.length > 0 && args[0] === 'config') {
     config.command = 'config'
-    config.remainingArgs = args.slice(1)
 
-    // Parse config action
-    const configArgs = args.slice(1)
-    const { value: action } = extractFlagValue(configArgs, ['--action', '-a'])
+    // Parse config action using the same pattern as provider flags
+    const { value: action, remainingArgs } = extractFlagValue(args.slice(1), [
+      '--action',
+      '-a',
+    ])
     if (action && ['view', 'edit', 'reset'].includes(action)) {
       config.configAction = action as 'view' | 'edit' | 'reset'
     }
+    config.remainingArgs = remainingArgs
 
     return config
   }

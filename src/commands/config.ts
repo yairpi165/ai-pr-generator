@@ -194,9 +194,9 @@ const editGitHosting = async (currentConfig: EnvConfig): Promise<EnvConfig> => {
   )
 
   const newConfig = { ...currentConfig }
-  if (bitbucketEmail) newConfig.BITBUCKET_EMAIL = bitbucketEmail
-  if (bitbucketToken) newConfig.BITBUCKET_TOKEN = bitbucketToken
-  if (githubToken) newConfig.GITHUB_TOKEN = githubToken
+  newConfig.BITBUCKET_EMAIL = bitbucketEmail
+  newConfig.BITBUCKET_TOKEN = bitbucketToken
+  newConfig.GITHUB_TOKEN = githubToken
 
   return newConfig
 }
