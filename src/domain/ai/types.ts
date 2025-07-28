@@ -11,6 +11,9 @@ export type AIResponse = {
 export type AIConfig = {
   openaiApiKey?: string
   geminiApiKey?: string
+  openaiModel?: string
+  geminiModel?: string
+  defaultProvider?: string
 }
 
 /**

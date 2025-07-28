@@ -37,13 +37,40 @@ export const createProviderManager = (config: AIConfig) => {
   }
 
   /**
-   * Generate content using the first available provider
+   * Generate content using the preferred provider or fallback
    */
   const generateContent = async (prompt: string): Promise<AIResponse> => {
     if (!hasAvailableProviders()) {
       throw new Error(AI_CONSTANTS.ERRORS.NO_AI_PROVIDERS)
     }
 
+    // If default provider is specified, try it first
+    if (config.defaultProvider) {
+      const defaultProvider = managerConfig.providers.find(
+        p => p.name.toLowerCase() === config.defaultProvider?.toLowerCase()
+      )
+
+      if (defaultProvider) {
+        try {
+          console.log(
+            `${AI_CONSTANTS.INFO.TRYING_NEXT_PROVIDER} ${defaultProvider.name}`
+          )
+          return await defaultProvider.generateContent(prompt)
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error)
+          console.log(
+            `${AI_CONSTANTS.INFO.PROVIDER_FAILED} ${defaultProvider.name}: ${errorMessage}`
+          )
+
+          if (!managerConfig.fallbackEnabled) {
+            throw error instanceof Error ? error : new Error(String(error))
+          }
+        }
+      }
+    }
+
+    // Fallback to all providers in order
     let lastError: Error | null = null
 
     for (const provider of managerConfig.providers) {

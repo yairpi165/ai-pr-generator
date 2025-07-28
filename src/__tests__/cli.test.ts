@@ -24,9 +24,13 @@ jest.mock('../commands/init.js', () => ({
   runInit: jest.fn(),
 }))
 
+jest.mock('../commands/config.js', () => ({
+  runConfig: jest.fn(),
+}))
+
 // process.exit is already mocked in setup.ts
 
-import { parseArguments, parseInput } from '../cli.js'
+import { parseArguments, parseInput, runCLI } from '../cli.js'
 import {
   generatePRDescription,
   savePRToFile,
@@ -183,6 +187,99 @@ describe('CLI Module', () => {
       expect(result.command).toBeUndefined()
       expect(result.remainingArgs).toEqual(['feat', 'init', 'something'])
     })
+
+    it('should handle version flag', () => {
+      const originalExit = process.exit
+      const originalConsoleLog = console.log
+      const mockExit = jest.fn()
+      const mockConsoleLog = jest.fn()
+
+      process.exit = mockExit as unknown as typeof process.exit
+      console.log = mockConsoleLog
+
+      const args = ['--version']
+      parseArguments(args)
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('ai-pr-generator v')
+      )
+      expect(mockExit).toHaveBeenCalledWith(0)
+
+      process.exit = originalExit
+      console.log = originalConsoleLog
+    })
+
+    it('should handle short version flag', () => {
+      const originalExit = process.exit
+      const originalConsoleLog = console.log
+      const mockExit = jest.fn()
+      const mockConsoleLog = jest.fn()
+
+      process.exit = mockExit as unknown as typeof process.exit
+      console.log = mockConsoleLog
+
+      const args = ['-v']
+      parseArguments(args)
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('ai-pr-generator v')
+      )
+      expect(mockExit).toHaveBeenCalledWith(0)
+
+      process.exit = originalExit
+      console.log = originalConsoleLog
+    })
+
+    it('should parse config command correctly', () => {
+      const args = ['config']
+      const result = parseArguments(args)
+
+      expect(result.command).toBe('config')
+      expect(result.remainingArgs).toEqual([])
+      expect(result.configAction).toBeUndefined()
+    })
+
+    it('should parse config command with view action', () => {
+      const args = ['config', '--action', 'view']
+      const result = parseArguments(args)
+
+      expect(result.command).toBe('config')
+      expect(result.configAction).toBe('view')
+      expect(result.remainingArgs).toEqual(['--action', 'view'])
+    })
+
+    it('should parse config command with edit action using short flag', () => {
+      const args = ['config', '-a', 'edit']
+      const result = parseArguments(args)
+
+      expect(result.command).toBe('config')
+      expect(result.configAction).toBe('edit')
+      expect(result.remainingArgs).toEqual(['-a', 'edit'])
+    })
+
+    it('should parse config command with reset action', () => {
+      const args = ['config', '--action', 'reset']
+      const result = parseArguments(args)
+
+      expect(result.command).toBe('config')
+      expect(result.configAction).toBe('reset')
+    })
+
+    it('should ignore invalid config action', () => {
+      const args = ['config', '--action', 'invalid']
+      const result = parseArguments(args)
+
+      expect(result.command).toBe('config')
+      expect(result.configAction).toBeUndefined()
+    })
+
+    it('should ignore config action flag without value', () => {
+      const args = ['config', '--action']
+      const result = parseArguments(args)
+
+      expect(result.command).toBe('config')
+      expect(result.configAction).toBeUndefined()
+    })
   })
 
   describe('parseInput', () => {
@@ -195,6 +292,46 @@ describe('CLI Module', () => {
 
     beforeEach(() => {
       mockGetInteractiveInput.mockResolvedValue(mockPROptions)
+    })
+
+    it('should throw error when init command reaches parseInput', async () => {
+      const config = { command: 'init' as const, remainingArgs: [] }
+
+      await expect(parseInput(config)).rejects.toThrow(
+        'Init command should be handled before calling parseInput'
+      )
+    })
+
+    it('should throw error when remainingArgs includes init', async () => {
+      const config = { remainingArgs: ['feat', 'init', 'something'] }
+
+      await expect(parseInput(config)).rejects.toThrow(
+        'Init command should be handled before calling parseInput'
+      )
+    })
+
+    it('should warn about unknown provider', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+      const config = { provider: 'unknown-provider', remainingArgs: ['feat'] }
+
+      await parseInput(config)
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Unknown provider: unknown-provider'
+      )
+      consoleSpy.mockRestore()
+    })
+
+    it('should handle valid provider names', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+      for (const provider of ['openai', 'gemini', 'GPT', 'Gemini']) {
+        const config = { provider, remainingArgs: ['feat'] }
+        await parseInput(config)
+      }
+
+      expect(consoleSpy).not.toHaveBeenCalled()
+      consoleSpy.mockRestore()
     })
 
     it('should log provider when specified', async () => {
@@ -533,6 +670,93 @@ describe('CLI Module', () => {
       expect(config).toHaveProperty('remainingArgs')
       expect(typeof config.provider).toBe('string')
       expect(Array.isArray(config.remainingArgs)).toBe(true)
+    })
+  })
+
+  describe('runCLI function', () => {
+    const { runInit } = require('../commands/init.js')
+    const { runConfig } = require('../commands/config.js')
+
+    const mockRunInit = runInit as jest.MockedFunction<typeof runInit>
+    const mockRunConfig = runConfig as jest.MockedFunction<typeof runConfig>
+
+    beforeEach(() => {
+      jest.clearAllMocks()
+      mockRunInit.mockResolvedValue(undefined)
+      mockRunConfig.mockResolvedValue(undefined)
+    })
+
+    it('should call runInit when init command is provided', async () => {
+      const originalArgv = process.argv
+      process.argv = ['node', 'cli.js', 'init']
+
+      await runCLI()
+
+      expect(mockRunInit).toHaveBeenCalledTimes(1)
+      expect(mockRunConfig).not.toHaveBeenCalled()
+
+      process.argv = originalArgv
+    })
+
+    it('should call runConfig when config command is provided', async () => {
+      const originalArgv = process.argv
+      process.argv = ['node', 'cli.js', 'config']
+
+      await runCLI()
+
+      expect(mockRunConfig).toHaveBeenCalledTimes(1)
+      expect(mockRunConfig).toHaveBeenCalledWith({ action: undefined })
+      expect(mockRunInit).not.toHaveBeenCalled()
+
+      process.argv = originalArgv
+    })
+
+    it('should call runConfig with action when config command has action flag', async () => {
+      const originalArgv = process.argv
+      process.argv = ['node', 'cli.js', 'config', '--action', 'view']
+
+      await runCLI()
+
+      expect(mockRunConfig).toHaveBeenCalledTimes(1)
+      expect(mockRunConfig).toHaveBeenCalledWith({ action: 'view' })
+      expect(mockRunInit).not.toHaveBeenCalled()
+
+      process.argv = originalArgv
+    })
+
+    it('should handle full CLI workflow with PR generation', async () => {
+      const originalArgv = process.argv
+      process.argv = ['node', 'cli.js', 'feat', 'Test feature']
+
+      const mockPRResult = {
+        title: 'Test title',
+        body: 'Test body',
+        fullDescription: 'Full description',
+      }
+
+      mockGeneratePRDescription.mockResolvedValue(mockPRResult)
+      mockSavePRToFile.mockReturnValue('/tmp/pr.md')
+
+      // Mock domain functions needed for full workflow
+      const {
+        handleOutputOptions,
+        loadReviewersConfig,
+      } = require('../domain/index.js')
+      const mockHandleOutputOptions =
+        handleOutputOptions as jest.MockedFunction<typeof handleOutputOptions>
+      const mockLoadReviewersConfig =
+        loadReviewersConfig as jest.MockedFunction<typeof loadReviewersConfig>
+
+      mockHandleOutputOptions.mockResolvedValue(undefined)
+      mockLoadReviewersConfig.mockReturnValue(undefined)
+
+      await runCLI()
+
+      expect(mockGeneratePRDescription).toHaveBeenCalled()
+      expect(mockSavePRToFile).toHaveBeenCalledWith('Full description')
+      expect(mockHandleOutputOptions).toHaveBeenCalled()
+
+      process.argv = originalArgv
     })
   })
 })

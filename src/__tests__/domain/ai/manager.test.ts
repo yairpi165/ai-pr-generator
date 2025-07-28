@@ -278,4 +278,109 @@ describe('AI Provider Manager', () => {
       expect(providers1).not.toBe(providers2) // Should be different array instances
     })
   })
+
+  describe('generateContent with defaultProvider', () => {
+    it('should use default provider when specified', async () => {
+      const config: AIConfig = {
+        openaiApiKey: 'test-openai-key',
+        geminiApiKey: 'test-gemini-key',
+        defaultProvider: 'OpenAI',
+      }
+      const testPrompt = 'Test prompt'
+      const expectedResponse: AIResponse = { text: 'OpenAI response' }
+
+      ;(mockOpenAIProvider.isAvailable as jest.Mock).mockReturnValue(true)
+      ;(mockGeminiProvider.isAvailable as jest.Mock).mockReturnValue(true)
+      ;(mockOpenAIProvider.generateContent as jest.Mock).mockResolvedValue(
+        expectedResponse
+      )
+
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+
+      const manager = createProviderManager(config)
+      const result = await manager.generateContent(testPrompt)
+
+      expect(result).toEqual(expectedResponse)
+      expect(mockOpenAIProvider.generateContent).toHaveBeenCalledWith(
+        testPrompt
+      )
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Trying next available provider...')
+      )
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should fallback to other providers when default provider fails and fallback enabled', async () => {
+      const config: AIConfig = {
+        openaiApiKey: 'test-openai-key',
+        geminiApiKey: 'test-gemini-key',
+        defaultProvider: 'OpenAI',
+      }
+      const testPrompt = 'Test prompt'
+      const expectedResponse: AIResponse = { text: 'Gemini response' }
+
+      ;(mockOpenAIProvider.isAvailable as jest.Mock).mockReturnValue(true)
+      ;(mockGeminiProvider.isAvailable as jest.Mock).mockReturnValue(true)
+      ;(mockOpenAIProvider.generateContent as jest.Mock).mockRejectedValue(
+        new Error('OpenAI failed')
+      )
+      ;(mockGeminiProvider.generateContent as jest.Mock).mockResolvedValue(
+        expectedResponse
+      )
+
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+
+      const manager = createProviderManager(config)
+      const result = await manager.generateContent(testPrompt)
+
+      expect(result).toEqual(expectedResponse)
+      expect(mockOpenAIProvider.generateContent).toHaveBeenCalledWith(
+        testPrompt
+      )
+      expect(mockGeminiProvider.generateContent).toHaveBeenCalledWith(
+        testPrompt
+      )
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Provider {provider} failed: OpenAI: OpenAI failed'
+        )
+      )
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should handle non-Error exceptions in default provider', async () => {
+      const config: AIConfig = {
+        openaiApiKey: 'test-openai-key',
+        geminiApiKey: 'test-gemini-key',
+        defaultProvider: 'OpenAI',
+      }
+      const testPrompt = 'Test prompt'
+      const expectedResponse: AIResponse = { text: 'Gemini response' }
+
+      ;(mockOpenAIProvider.isAvailable as jest.Mock).mockReturnValue(true)
+      ;(mockGeminiProvider.isAvailable as jest.Mock).mockReturnValue(true)
+      ;(mockOpenAIProvider.generateContent as jest.Mock).mockRejectedValue(
+        'String error'
+      )
+      ;(mockGeminiProvider.generateContent as jest.Mock).mockResolvedValue(
+        expectedResponse
+      )
+
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+
+      const manager = createProviderManager(config)
+      const result = await manager.generateContent(testPrompt)
+
+      expect(result).toEqual(expectedResponse)
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Provider {provider} failed: OpenAI: String error'
+        )
+      )
+
+      consoleSpy.mockRestore()
+    })
+  })
 })

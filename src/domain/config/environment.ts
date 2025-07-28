@@ -11,6 +11,9 @@ dotenv.config({ path: path.join(process.cwd(), '.env') })
 export const aiConfig: AIConfig = {
   openaiApiKey: process.env[CONFIG_CONSTANTS.ENV_VARS.OPENAI_API_KEY],
   geminiApiKey: process.env[CONFIG_CONSTANTS.ENV_VARS.GEMINI_API_KEY],
+  openaiModel: process.env.OPENAI_MODEL,
+  geminiModel: process.env.GEMINI_MODEL,
+  defaultProvider: process.env.DEFAULT_PROVIDER,
 }
 
 // Environment Configuration

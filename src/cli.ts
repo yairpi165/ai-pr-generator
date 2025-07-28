@@ -17,16 +17,23 @@ import {
   UI_CONSTANTS,
 } from './domain/index.js'
 import { runInit } from './commands/init.js'
+import { runConfig } from './commands/config.js'
 
 /**
  * Parse command line arguments
  */
 export const parseArguments = (
   args: string[] = process.argv.slice(2)
-): { command?: string; provider?: string; remainingArgs: string[] } => {
+): {
+  command?: string
+  provider?: string
+  configAction?: 'view' | 'edit' | 'reset'
+  remainingArgs: string[]
+} => {
   const config: {
     command?: string
     provider?: string
+    configAction?: 'view' | 'edit' | 'reset'
     remainingArgs: string[]
   } = {
     remainingArgs: [],
@@ -44,6 +51,28 @@ export const parseArguments = (
   if (args.length > 0 && args[0] === 'init') {
     config.command = 'init'
     config.remainingArgs = args.slice(1)
+    return config
+  }
+
+  // Handle config command
+  if (args.length > 0 && args[0] === 'config') {
+    config.command = 'config'
+    config.remainingArgs = args.slice(1)
+
+    // Parse config options
+    const configArgs = args.slice(1)
+    if (configArgs.includes('--action') || configArgs.includes('-a')) {
+      const actionIndex = configArgs.findIndex(
+        arg => arg === '--action' || arg === '-a'
+      )
+      if (actionIndex !== -1 && actionIndex + 1 < configArgs.length) {
+        const action = configArgs[actionIndex + 1]
+        if (['view', 'edit', 'reset'].includes(action)) {
+          config.configAction = action as 'view' | 'edit' | 'reset'
+        }
+      }
+    }
+
     return config
   }
 
@@ -127,6 +156,12 @@ const runCLI = async (): Promise<void> => {
       return
     }
 
+    // Handle config command early - this prevents config from reaching parseInput
+    if (config.command === 'config') {
+      await runConfig({ action: config.configAction })
+      return
+    }
+
     console.log(chalk.blue.bold(`${UI_CONSTANTS.MESSAGES.WELCOME}\n`))
 
     // Load reviewers configuration
@@ -164,6 +199,9 @@ const runCLI = async (): Promise<void> => {
     process.exit(1)
   }
 }
+
+// Export runCLI for testing
+export { runCLI }
 
 // Run the CLI
 runCLI().catch(error =>

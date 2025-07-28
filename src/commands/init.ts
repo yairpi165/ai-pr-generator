@@ -132,6 +132,97 @@ const createEnvFile = async (options: InitOptions): Promise<void> => {
       console.log(chalk.green('✅ Gemini API key saved'))
     }
 
+    // AI Models Setup
+    console.log('')
+    console.log(chalk.cyan('2️⃣  AI Models Setup'))
+    console.log(chalk.cyan('=================='))
+    console.log('Choose your preferred AI models:')
+    console.log('')
+
+    const { openaiModel, geminiModel, defaultProvider } = await inquirer.prompt(
+      [
+        {
+          type: 'list',
+          name: 'openaiModel',
+          message: '🤖 Select OpenAI Model:',
+          choices: [
+            { name: 'GPT-4o Mini (Fast & Cheap)', value: 'gpt-4o-mini' },
+            { name: 'GPT-4o (Best Quality)', value: 'gpt-4o' },
+            { name: 'GPT-4 Turbo (Balanced)', value: 'gpt-4-turbo' },
+            { name: 'Custom Model', value: 'custom' },
+          ],
+          default: 'gpt-4o-mini',
+        },
+        {
+          type: 'list',
+          name: 'geminiModel',
+          message: '🤖 Select Gemini Model:',
+          choices: [
+            { name: 'Gemini 2.0 Flash (Fast)', value: 'gemini-2.0-flash' },
+            { name: 'Gemini 2.0 Pro (Best Quality)', value: 'gemini-2.0-pro' },
+            { name: 'Gemini 1.5 Pro (Balanced)', value: 'gemini-1.5-pro' },
+            { name: 'Custom Model', value: 'custom' },
+          ],
+          default: 'gemini-2.0-flash',
+        },
+        {
+          type: 'list',
+          name: 'defaultProvider',
+          message: '🎯 Default AI Provider:',
+          choices: [
+            { name: 'Auto-select (Recommended)', value: '' },
+            { name: 'OpenAI (GPT)', value: 'openai' },
+            { name: 'Gemini', value: 'gemini' },
+          ],
+          default: '',
+        },
+      ]
+    )
+
+    // Handle custom model inputs
+    let finalOpenaiModel = openaiModel
+    let finalGeminiModel = geminiModel
+
+    if (openaiModel === 'custom') {
+      const { customOpenaiModel } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'customOpenaiModel',
+          message: '🔧 Enter custom OpenAI model name:',
+          default: 'gpt-4o-mini',
+        },
+      ])
+      finalOpenaiModel = customOpenaiModel
+    }
+
+    if (geminiModel === 'custom') {
+      const { customGeminiModel } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'customGeminiModel',
+          message: '🔧 Enter custom Gemini model name:',
+          default: 'gemini-2.0-flash',
+        },
+      ])
+      finalGeminiModel = customGeminiModel
+    }
+
+    // Save model configurations
+    if (openaiKey) {
+      envContent += `OPENAI_MODEL=${finalOpenaiModel}\n`
+      console.log(chalk.green(`✅ OpenAI model set to: ${finalOpenaiModel}`))
+    }
+
+    if (geminiKey) {
+      envContent += `GEMINI_MODEL=${finalGeminiModel}\n`
+      console.log(chalk.green(`✅ Gemini model set to: ${finalGeminiModel}`))
+    }
+
+    if (defaultProvider) {
+      envContent += `DEFAULT_PROVIDER=${defaultProvider}\n`
+      console.log(chalk.green(`✅ Default provider set to: ${defaultProvider}`))
+    }
+
     // Bitbucket setup
     console.log('')
     console.log(chalk.cyan('3️⃣  Bitbucket Setup (Optional)'))

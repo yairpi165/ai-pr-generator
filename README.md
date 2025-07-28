@@ -24,7 +24,7 @@ npm install -g ai-pr-generator
 
 ### 2. Initialize
 
-Set up your API keys:
+Set up your API keys and AI models:
 
 ```bash
 genpr init
@@ -33,6 +33,8 @@ genpr init
 This will guide you through setting up:
 - OpenAI API key (GPT)
 - Gemini API key
+- AI model selection (GPT-4o, Gemini 2.0, etc.)
+- Default AI provider preference
 - Optional Bitbucket/GitHub credentials for automatic PR creation
 
 ### 3. Use
@@ -62,6 +64,38 @@ You'll need at least one AI provider:
 3. Create an API key
 4. Copy your API key
 
+## ⚙️ Configuration Management
+
+### Initial Setup
+During `genpr init`, you can configure:
+- **AI Models**: Choose from GPT-4o, GPT-4 Turbo, Gemini 2.0 Flash, Gemini 2.0 Pro, or custom models
+- **Default Provider**: Set your preferred AI provider (OpenAI or Gemini)
+- **Auto-select**: Let the tool automatically choose the best available provider
+
+### Configuration Management
+Use `genpr config` to:
+- **View** current configuration
+- **Edit** API keys, models, and preferences
+- **Reset** all configuration and start fresh
+
+### Environment Variables
+The tool uses these environment variables (in `.env`):
+```bash
+# AI Providers
+OPENAI_API_KEY=your_openai_key
+GEMINI_API_KEY=your_gemini_key
+
+# AI Models
+OPENAI_MODEL=gpt-4o-mini
+GEMINI_MODEL=gemini-2.0-flash
+DEFAULT_PROVIDER=openai
+
+# Git Hosting (Optional)
+BITBUCKET_EMAIL=your_email
+BITBUCKET_TOKEN=your_token
+GITHUB_TOKEN=your_token
+```
+
 ## 🎯 Usage Examples
 
 ### Basic Usage
@@ -80,6 +114,18 @@ genpr refactor "Extract authentication logic"
 # Force specific provider
 genpr --provider GPT feat "Add feature"
 genpr --provider Gemini bugfix "Fix bug"
+```
+
+### Manage Configuration
+```bash
+# View current configuration
+genpr config
+
+# Edit configuration
+genpr config --action edit
+
+# Reset configuration
+genpr config --action reset
 ```
 
 ### Output Options
