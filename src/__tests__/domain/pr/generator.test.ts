@@ -7,7 +7,7 @@ import {
 // Remove unused type imports
 
 // Mock dependencies
-jest.mock('fs')
+// fs is already mocked in setup.ts
 jest.mock('../../../domain/config/index.js', () => ({
   outputPath: '/path/to/pr-description.md',
   aiConfig: jest.fn(),
@@ -19,7 +19,7 @@ import fs from 'fs'
 import { outputPath, aiConfig } from '../../../domain/config/index.js'
 import { generateDiff } from '../../../domain/git/index.js'
 import { createProviderManager } from '../../../domain/ai/index.js'
-import type { ProviderManager } from '../../../domain/ai/types.js'
+import type { AIConfig, ProviderManager } from '../../../domain/ai/types.js'
 
 const mockFs = fs as jest.Mocked<typeof fs>
 const mockGenerateDiff = generateDiff as jest.MockedFunction<
@@ -28,7 +28,7 @@ const mockGenerateDiff = generateDiff as jest.MockedFunction<
 const mockCreateProviderManager = createProviderManager as jest.MockedFunction<
   typeof createProviderManager
 >
-const mockAiConfig = aiConfig as jest.MockedFunction<() => any>
+const mockAiConfig = aiConfig as jest.MockedFunction<() => AIConfig>
 
 describe('PR Generator', () => {
   const mockProviderManager: jest.Mocked<ProviderManager> = {

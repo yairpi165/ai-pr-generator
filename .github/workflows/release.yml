@@ -1,0 +1,117 @@
+name: Create GitHub Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0, 1.0.1)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - custom
+      custom_version:
+        description: 'Custom version (if version is set to custom)'
+        required: false
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build
+
+      - name: Check build output
+        run: |
+          ls -la dist/
+          node dist/cli.js --help
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event.inputs.version }}" = "custom" ]; then
+            echo "VERSION=${{ github.event.inputs.custom_version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=$(npm version ${{ github.event.inputs.version }} --no-git-tag-version --dry-run | sed 's/v//')" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          release_name: Release v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## 🚀 Release v${{ steps.version.outputs.VERSION }}
+
+            ### ✨ Features
+            - AI-powered PR generation
+            - Multiple AI providers (GPT and Gemini)
+            - Interactive CLI with beautiful UI
+            - Automatic PR creation in Bitbucket/GitHub
+
+            ### 📦 Installation
+            ```bash
+            npm install -g ai-pr-generator
+            ```
+
+            ### 🎯 Usage
+            ```bash
+            genpr init    # Initialize API keys
+            genpr         # Interactive mode
+            genpr feat "Add feature"  # One-liner mode
+            ```
+
+            ### 🔗 Links
+            - [GitHub Repository](https://github.com/yairpi165/ai-pr-generator)
+            - [npm Package](https://www.npmjs.com/package/ai-pr-generator)
+          draft: false
+          prerelease: false
+
+      - name: Update package.json version
+        run: |
+          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+
+      - name: Create Git tag and push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add package.json
+          git commit -m "Bump version to ${{ steps.version.outputs.VERSION }}"
+          git tag v${{ steps.version.outputs.VERSION }}
+          git push origin main
+          git push origin v${{ steps.version.outputs.VERSION }}
+
+      - name: Create Release branch
+        run: |
+          git checkout -b release/v${{ steps.version.outputs.VERSION }}
+          git push origin release/v${{ steps.version.outputs.VERSION }}

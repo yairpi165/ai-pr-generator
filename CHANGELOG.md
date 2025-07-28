@@ -22,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Architecture Refactor**: Moved from `src/lib/` to `src/domain/` structure
-- **Package Manager**: Standardized on Yarn instead of npm
+- **Package Manager**: Standardized on npm for better cross-platform compatibility
+- **Installation Method**: Replaced `install.sh` script with `genpr init` command for better npm package integration
+- **CI Optimization**: Simplified CI to run tests once on Node.js 20 instead of multiple Node.js versions
 - **Test Coverage**: Increased coverage threshold to 95% (statements/lines/functions) and 85% (branches)
 - **CLI Testing**: Replaced brittle regex-based tests with proper unit testing
 - **Documentation**: Updated all documentation to reflect new architecture
@@ -61,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Details
 - **Language**: TypeScript with ES modules
 - **Runtime**: Node.js 18+
-- **Package Manager**: Yarn
+- **Package Manager**: npm
 - **Testing**: Jest with comprehensive test suite
 - **Linting**: ESLint with TypeScript and Prettier
 - **Coverage**: 98.57% statement coverage, 94.47% branch coverage

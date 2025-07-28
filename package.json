@@ -1,41 +1,63 @@
 {
-  "name": "ai-pr-generator-node",
+  "name": "ai-pr-generator",
   "version": "1.0.0",
-  "private": true,
-  "description": "Generate beautiful, structured pull request descriptions using Gemini AI",
+  "description": "Generate beautiful, structured pull request descriptions using AI",
   "main": "dist/cli.js",
   "type": "module",
   "bin": {
     "genpr": "./dist/cli.js"
   },
+  "preferGlobal": true,
   "scripts": {
     "build": "tsc",
+    "verify-build": "node scripts/verify-build.js",
+    "postinstall": "tsc && node scripts/verify-build.js",
     "start": "node dist/cli.js",
     "dev": "tsc -w",
-    "dev:watch": "yarn build --watch",
+    "dev:watch": "npm run build --watch",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:verbose": "jest --verbose",
     "lint": "eslint ./src",
     "lint:fix": "eslint src/**/*.ts --fix",
+    "lint-staged": "lint-staged",
     "format": "prettier --write src/**/*.ts",
     "format:check": "prettier --check src/**/*.ts",
     "tsc": "tsc --noEmit",
-    "check": "yarn lint && yarn format:check && yarn tsc",
-    "fix": "yarn lint:fix && yarn format",
-    "prepare": "husky"
+    "check": "npm run lint && npm run format:check && npm run tsc",
+    "fix": "npm run lint:fix && npm run format",
+    "prepare": "husky",
+    "prepublishOnly": "npm run test && npm run build && node scripts/verify-build.js",
+    "pack": "npm pack --dry-run"
   },
   "keywords": [
     "ai",
     "pr",
     "pull-request",
     "gemini",
+    "openai",
     "git",
-    "cli"
+    "cli",
+    "code-review",
+    "automation",
+    "typescript",
+    "node"
   ],
   "author": "Yair Pinchasi",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yairpi165/ai-pr-generator"
+  },
+  "bugs": {
+    "url": "https://github.com/yairpi165/ai-pr-generator/issues"
+  },
+  "homepage": "https://github.com/yairpi165/ai-pr-generator#readme",
+  "files": [
+    "dist",
+    "reviewers.json.example"
+  ],
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
     "chalk": "^5.3.0",
@@ -66,8 +88,7 @@
     "typescript": "^5.8.3"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "yarn": ">=1.22.0"
+    "node": ">=18.0.0"
   },
   "lint-staged": {
     "src/**/*.ts": [

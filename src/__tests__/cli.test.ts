@@ -20,16 +20,11 @@ jest.mock('../domain/index.js', () => ({
   },
 }))
 
-jest.mock('chalk', () => ({
-  blue: {
-    bold: jest.fn((text: string) => text),
-  },
+jest.mock('../commands/init.js', () => ({
+  runInit: jest.fn(),
 }))
 
-// Mock process.exit to prevent tests from actually exiting
-const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-  throw new Error('process.exit() was called')
-})
+// process.exit is already mocked in setup.ts
 
 import { parseArguments, parseInput } from '../cli.js'
 import {
@@ -56,7 +51,7 @@ const mockGetInteractiveInput = getInteractiveInput as jest.MockedFunction<
 describe('CLI Module', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockExit.mockClear()
+    // mockExit is handled in setup.ts
   })
 
   describe('parseArguments', () => {
@@ -161,6 +156,32 @@ describe('CLI Module', () => {
 
       expect(result.provider).toBe('openai')
       expect(result.remainingArgs).toEqual([])
+    })
+
+    it('should parse init command correctly', () => {
+      const args = ['init']
+      const result = parseArguments(args)
+
+      expect(result.command).toBe('init')
+      expect(result.remainingArgs).toEqual([])
+      expect(result.provider).toBeUndefined()
+    })
+
+    it('should parse init command with additional args', () => {
+      const args = ['init', '--some', 'options']
+      const result = parseArguments(args)
+
+      expect(result.command).toBe('init')
+      expect(result.remainingArgs).toEqual(['--some', 'options'])
+      expect(result.provider).toBeUndefined()
+    })
+
+    it('should not parse init when it is not the first argument', () => {
+      const args = ['feat', 'init', 'something']
+      const result = parseArguments(args)
+
+      expect(result.command).toBeUndefined()
+      expect(result.remainingArgs).toEqual(['feat', 'init', 'something'])
     })
   })
 

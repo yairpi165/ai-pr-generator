@@ -28,7 +28,7 @@ import fs from 'fs'
 import { openBitbucketPR, openGitHubPR } from '../../../domain/git/index.js'
 
 const mockInquirer = inquirer as jest.Mocked<typeof inquirer>
-const mockChalk = chalk as any
+const mockChalk = chalk as jest.Mocked<typeof chalk>
 const mockClipboardy = clipboardy as jest.Mocked<typeof clipboardy>
 const mockOpen = open as jest.MockedFunction<typeof open>
 const mockFs = fs as jest.Mocked<typeof fs>
@@ -51,7 +51,7 @@ describe('UI Output Handling', () => {
     // Reset all mocks to default behavior
     mockFs.readFileSync.mockReturnValue(testFileContent)
     mockClipboardy.write.mockResolvedValue(undefined)
-    mockOpen.mockResolvedValue({} as any)
+    mockOpen.mockResolvedValue({} as unknown as ReturnType<typeof open>)
     mockOpenBitbucketPR.mockResolvedValue(undefined)
     mockOpenGitHubPR.mockResolvedValue(undefined)
     mockInquirer.prompt.mockResolvedValue({ action: 'nothing' })
@@ -249,7 +249,13 @@ describe('UI Output Handling', () => {
 
         await handleOutputOptions(testOutputPath, testTitle, testDescription)
 
-        const promptCall = mockInquirer.prompt.mock.calls[0][0] as any[]
+        const promptCall = mockInquirer.prompt.mock
+          .calls[0][0] as unknown as Array<{
+          type: string
+          name: string
+          message: string
+          choices: Array<{ name: string; value: string }>
+        }>
         expect(promptCall[0].choices).toEqual(UI_CONSTANTS.OUTPUT_CHOICES)
       })
 
@@ -258,7 +264,13 @@ describe('UI Output Handling', () => {
 
         await handleOutputOptions(testOutputPath, testTitle, testDescription)
 
-        const promptCall = mockInquirer.prompt.mock.calls[0][0] as any[]
+        const promptCall = mockInquirer.prompt.mock
+          .calls[0][0] as unknown as Array<{
+          type: string
+          name: string
+          message: string
+          choices: Array<{ name: string; value: string }>
+        }>
         const choices = promptCall[0].choices
 
         expect(choices).toContainEqual({
@@ -315,7 +327,9 @@ describe('UI Output Handling', () => {
 
     describe('edge cases', () => {
       it('should handle unknown action gracefully', async () => {
-        mockInquirer.prompt.mockResolvedValue({ action: 'unknown' as any })
+        mockInquirer.prompt.mockResolvedValue({
+          action: 'unknown' as 'clipboard' | 'editor' | 'pr' | 'nothing',
+        })
 
         // Should not throw, just not match any case
         await handleOutputOptions(testOutputPath, testTitle, testDescription)
@@ -391,10 +405,10 @@ describe('UI Output Handling', () => {
         })
 
         mockOpen.mockImplementationOnce(() => {
-          return new Promise<any>(resolve => {
+          return new Promise(resolve => {
             setTimeout(() => {
               openResolved = true
-              resolve({} as any) // Mock ChildProcess
+              resolve({} as unknown as ReturnType<typeof open>)
             }, 5)
           })
         })
@@ -415,7 +429,7 @@ describe('UI Output Handling', () => {
           // Reset mocks to default behavior
           mockFs.readFileSync.mockReturnValue(testFileContent)
           mockClipboardy.write.mockResolvedValue(undefined)
-          mockOpen.mockResolvedValue({} as any)
+          mockOpen.mockResolvedValue({} as unknown as ReturnType<typeof open>)
           mockOpenBitbucketPR.mockResolvedValue(undefined)
           mockOpenGitHubPR.mockResolvedValue(undefined)
           mockInquirer.prompt.mockResolvedValue({ action: platform })

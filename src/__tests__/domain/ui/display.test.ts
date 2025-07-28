@@ -22,7 +22,7 @@ import {
 import type { PROptions } from '../../../domain/pr/types.js'
 import chalk from 'chalk'
 
-const mockChalk = chalk as any
+const mockChalk = chalk as jest.Mocked<typeof chalk>
 
 describe('UI Display Functions', () => {
   beforeEach(() => {
@@ -521,15 +521,19 @@ describe('UI Display Functions', () => {
     it('should handle null and undefined values gracefully', () => {
       const optionsWithNulls = {
         prType: 'feat',
-        prTitle: null as any,
-        ticket: undefined as any,
+        prTitle: null as string | null,
+        ticket: undefined as string | undefined,
         explanation: '',
       }
 
       // Should not throw
-      expect(() => displayOptions(optionsWithNulls, 'OpenAI')).not.toThrow()
-      expect(() => displayProgress(null as any)).not.toThrow()
-      expect(() => displayResult('test', null as any, 'OpenAI')).not.toThrow()
+      expect(() =>
+        displayOptions(optionsWithNulls as unknown as PROptions, 'OpenAI')
+      ).not.toThrow()
+      expect(() => displayProgress(null as unknown as string)).not.toThrow()
+      expect(() =>
+        displayResult('test', null as unknown as string, 'OpenAI')
+      ).not.toThrow()
     })
   })
 })

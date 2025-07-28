@@ -1,11 +1,5 @@
 // Mock external dependencies at module level
-jest.mock('open', () => jest.fn())
-jest.mock('chalk', () => ({
-  green: jest.fn((str: string) => str),
-  yellow: jest.fn((str: string) => str),
-  blue: jest.fn((str: string) => str),
-  red: jest.fn((str: string) => str),
-}))
+// open and chalk are already mocked in setup.ts
 jest.mock('../../../../domain/config/constants.js', () => ({
   CONFIG_CONSTANTS: {
     API: {
@@ -76,7 +70,7 @@ const mockGetGitRepository = getGitRepository as jest.MockedFunction<
 >
 
 // Mock fetch globally
-global.fetch = jest.fn()
+// global.fetch is already mocked in setup.ts
 
 describe('Bitbucket Git Hosting', () => {
   const mockRepoInfo = {
@@ -107,7 +101,7 @@ describe('Bitbucket Git Hosting', () => {
     // Setup default mocks
     mockGetGitRepository.mockReturnValue(mockRepoInfo)
     mockGetBitbucketReviewers.mockReturnValue(mockReviewers)
-    mockOpen.mockResolvedValue({} as any)
+    mockOpen.mockResolvedValue({} as unknown as ReturnType<typeof open>)
 
     // Mock fetch
     ;(global.fetch as jest.Mock).mockResolvedValue({

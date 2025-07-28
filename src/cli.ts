@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import chalk from 'chalk'
+import type { PROptions } from './domain/pr/types.js'
 import {
   generatePRDescription,
   savePRToFile,
@@ -12,30 +13,49 @@ import {
   displayError,
   handleOutputOptions,
   outputPath,
-  type PROptions,
   loadReviewersConfig,
   UI_CONSTANTS,
 } from './domain/index.js'
+import { runInit } from './commands/init.js'
 
 /**
  * Parse command line arguments
  */
 export const parseArguments = (
   args: string[] = process.argv.slice(2)
-): { provider?: string; remainingArgs: string[] } => {
-  const config: { provider?: string; remainingArgs: string[] } = {
+): { command?: string; provider?: string; remainingArgs: string[] } => {
+  const config: {
+    command?: string
+    provider?: string
+    remainingArgs: string[]
+  } = {
     remainingArgs: [],
   }
 
-  // Find --provider flag anywhere in the arguments
-  const providerIndex = args.findIndex(arg => arg === '--provider')
-  if (providerIndex !== -1 && args[providerIndex + 1]) {
+  // Handle version flag early
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(
+      `ai-pr-generator v${process.env.npm_package_version || '1.0.0'}`
+    )
+    process.exit(0)
+  }
+
+  // Handle init command
+  if (args.length > 0 && args[0] === 'init') {
+    config.command = 'init'
+    config.remainingArgs = args.slice(1)
+    return config
+  }
+
+  // Handle provider flag
+  const providerIndex = args.findIndex(
+    arg => arg === '--provider' || arg === '-p'
+  )
+  if (providerIndex !== -1 && providerIndex + 1 < args.length) {
     config.provider = args[providerIndex + 1]
-    // Remove --provider and its value from args
-    config.remainingArgs = [
-      ...args.slice(0, providerIndex),
-      ...args.slice(providerIndex + 2),
-    ]
+    config.remainingArgs = args.filter(
+      (_, index) => index !== providerIndex && index !== providerIndex + 1
+    )
   } else {
     config.remainingArgs = args
   }
@@ -45,26 +65,43 @@ export const parseArguments = (
 
 /**
  * Parse input from command line or interactive prompts
+ *
+ * @param config - Configuration object containing command, provider, and remaining arguments
+ * @returns Promise<PROptions> - Parsed PR options for generation
+ *
+ * @throws {Error} If init command is passed (should be handled before calling this function)
+ *
+ * Note: This function should only be called after init commands have been filtered out
+ * in runCLI(). The function includes runtime assertions to ensure type safety.
  */
 export const parseInput = async (config: {
+  command?: string
   provider?: string
   remainingArgs: string[]
 }): Promise<PROptions> => {
+  // Runtime assertion: init commands should never reach this function
+  if (config.command === 'init' || config.remainingArgs.includes('init')) {
+    throw new Error('Init command should be handled before calling parseInput')
+  }
+
+  if (
+    config.provider &&
+    !['openai', 'gemini', 'GPT', 'Gemini'].includes(config.provider)
+  ) {
+    console.warn(`Unknown provider: ${config.provider}`)
+  }
   // If provider is specified, validate it (this would need to be implemented)
   if (config.provider) {
     console.log(`Using provider: ${config.provider}`)
   }
 
-  // Use remaining arguments (after --provider flag) for PR options
-  const remainingArgs = config.remainingArgs
-
-  if (remainingArgs.length > 0) {
+  if (config.remainingArgs.length > 0) {
     return {
-      prType: remainingArgs[0],
-      prTitle: remainingArgs[1] || '',
+      prType: config.remainingArgs[0],
+      prTitle: config.remainingArgs[1] || '',
       ticket: '',
       explanation: '',
-    }
+    } satisfies PROptions
   }
 
   return await getInteractiveInput()
@@ -72,16 +109,29 @@ export const parseInput = async (config: {
 
 /**
  * Main CLI function
+ *
+ * Handles the complete CLI flow:
+ * 1. Parse command line arguments
+ * 2. Handle init command early (before parseInput)
+ * 3. Parse PR options (init commands filtered out)
+ * 4. Generate and display PR description
  */
 const runCLI = async (): Promise<void> => {
   try {
+    // Parse command line arguments or get interactive input
+    const config = parseArguments()
+
+    // Handle init command early - this prevents init from reaching parseInput
+    if (config.command === 'init') {
+      await runInit()
+      return
+    }
+
     console.log(chalk.blue.bold(`${UI_CONSTANTS.MESSAGES.WELCOME}\n`))
 
     // Load reviewers configuration
     loadReviewersConfig()
 
-    // Parse command line arguments or get interactive input
-    const config = parseArguments()
     const options = await parseInput(config)
 
     // Display selected options

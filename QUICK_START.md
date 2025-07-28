@@ -1,28 +1,22 @@
-# 🚀 Quick Start - Node.js Version
-
-## Prerequisites
-
-- Node.js 18+ installed
-- Git repository with changes
+# 🚀 Quick Start Guide
 
 ## Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/your-username/ai-pr-generator.git
-cd ai-pr-generator
+Install globally via npm:
 
-# Run the installer (detects Node.js automatically)
-chmod +x install.sh
-./install.sh
+```bash
+npm install -g ai-pr-generator
 ```
 
-The installer will:
+## Initialization
 
-- ✅ Detect Node.js 18+
-- 📦 Install dependencies (`yarn install`)
-- 🔑 Prompt for Gemini API key
-- 🔗 Add `genpr` alias to your shell
+After installation, run the initialization command:
+
+```bash
+genpr init
+```
+
+This will guide you through setting up your API keys for OpenAI and/or Gemini.
 
 ## Usage
 
@@ -35,33 +29,53 @@ genpr
 ### One-liner Mode
 
 ```bash
-genpr feat "Add search bar"
-genpr fix "Fix login bug"
-genpr refactor "Extract service"
+genpr feat "Add new feature"
+genpr bugfix "Fix critical bug"
+genpr refactor "Improve code structure"
 ```
 
-## Features
+## API Keys Setup
 
-- 🎨 Beautiful colored terminal output
-- ⌨️ Arrow key navigation in prompts
-- 📋 Copy to clipboard option
-- 📝 Open in editor option
-- 🤖 AI-generated titles (optional)
-- 🎫 Ticket ID support
+You'll need at least one API key:
 
-## What's Different from Python Version?
+### OpenAI (GPT)
 
-- **Better UI**: Colors, arrow keys, better prompts
-- **Faster startup**: No virtual environment activation
-- **Modern JS**: ES6+ async/await syntax
-- **Same output**: Identical PR descriptions
+1. Visit: https://platform.openai.com/api-keys
+2. Sign in and create a new secret key
+3. Copy your API key
+
+### Gemini
+
+1. Visit: https://makersuite.google.com/app/apikey
+2. Sign in with your Google account
+3. Create an API key
+4. Copy your API key
+
+## Optional: Automatic PR Creation
+
+For automatic PR creation in Bitbucket or GitHub, you can set up additional credentials during initialization.
 
 ## Troubleshooting
 
-- **"genpr not found"**: Restart terminal or run `source ~/.zshrc`
-- **"API key required"**: Create `.env` file with `GEMINI_API_KEY=your_key`
-- **"Permission denied"**: Run `chmod +x src/cli.js`
+- **"genpr command not found"**: Restart your terminal after installation
+- **"No AI providers available"**: Run `genpr init` to set up your API keys
+- **Permission issues**: Make sure you have Node.js 18+ installed
 
----
+## Examples
 
-**Both Python and Node.js versions work identically! Choose what you prefer.**
+```bash
+# Generate a feature PR
+genpr feat "Add user authentication"
+
+# Generate a bugfix PR
+genpr bugfix "Fix login button not working"
+
+# Generate a refactor PR
+genpr refactor "Extract user service to separate module"
+```
+
+The tool will:
+
+1. Analyze your Git diff
+2. Generate a professional PR description
+3. Offer to copy to clipboard or open in editor

@@ -1,0 +1,57 @@
+# Development files
+src/
+__tests__/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+test-*.js
+test-*.ts
+
+# Configuration files
+.eslintrc.js
+eslint.config.js
+.prettierrc
+.prettierignore
+jest.config.ts
+tsconfig.json
+tsconfig.test.json
+
+# Documentation
+README.md
+CHANGELOG.md
+QUICK_START.md
+PROJECT_STRUCTURE.md
+.github/
+.claude/
+
+# Development tools
+.husky/
+.huskyrc
+lint-staged.config.js
+
+# Environment
+.env.example
+
+# Build tools
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test files
+test-install.sh 

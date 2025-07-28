@@ -9,7 +9,9 @@ import OpenAI from 'openai'
 const MockedOpenAI = OpenAI as jest.MockedClass<typeof OpenAI>
 
 describe('OpenAI Provider', () => {
-  let mockCreate: jest.MockedFunction<any>
+  let mockCreate: jest.MockedFunction<
+    () => Promise<{ choices: Array<{ message: { content: string | null } }> }>
+  >
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -26,7 +28,7 @@ describe('OpenAI Provider', () => {
               create: mockCreate,
             },
           },
-        }) as any
+        }) as unknown as jest.Mocked<OpenAI>
     )
   })
 

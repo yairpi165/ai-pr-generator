@@ -201,7 +201,7 @@ describe('PR Constants', () => {
     })
 
     it('should not have undefined values', () => {
-      const checkObject = (obj: any, path = ''): void => {
+      const checkObject = (obj: object, path = ''): void => {
         Object.entries(obj).forEach(([key, value]) => {
           const currentPath = path ? `${path}.${key}` : key
 

@@ -12,8 +12,7 @@ import { PR_CONSTANTS } from '../../../domain/pr/constants.js'
 import type { ReviewersConfig, Reviewer } from '../../../domain/pr/types.js'
 
 // Mock dependencies
-jest.mock('fs')
-jest.mock('path')
+// fs and path are already mocked in setup.ts
 
 import fs from 'fs'
 import path from 'path'
@@ -153,7 +152,9 @@ describe('Reviewers Management', () => {
     })
 
     it('should return default reviewers when platform not configured', () => {
-      const unknownPlatformReviewers = getReviewers('unknown' as any)
+      const unknownPlatformReviewers = getReviewers(
+        'unknown' as 'github' | 'bitbucket' | 'gitlab'
+      )
 
       expect(unknownPlatformReviewers).toEqual(mockReviewersConfig.default)
     })
@@ -165,7 +166,9 @@ describe('Reviewers Management', () => {
       // Force reload
       loadReviewersConfig()
 
-      const unknownPlatformReviewers = getReviewers('unknown' as any)
+      const unknownPlatformReviewers = getReviewers(
+        'unknown' as 'github' | 'bitbucket' | 'gitlab'
+      )
       expect(unknownPlatformReviewers).toEqual([])
     })
 
@@ -373,9 +376,9 @@ describe('Reviewers Management', () => {
 
       expect(getGitHubReviewers()).toEqual([])
       expect(getBitbucketReviewers()).toEqual([])
-      expect(getReviewers('unknown' as any)).toEqual(
-        configWithEmptyArrays.default
-      )
+      expect(
+        getReviewers('unknown' as 'github' | 'bitbucket' | 'gitlab')
+      ).toEqual(configWithEmptyArrays.default)
     })
   })
 
