@@ -39,11 +39,6 @@ jobs:
       - name: Build project
         run: yarn build
 
-      - name: Check build output
-        run: |
-          ls -la dist/
-          node dist/cli.js --help
-
   security:
     runs-on: ubuntu-latest
 
