@@ -1,55 +1,57 @@
-# Source files (not needed in published package)
-src/
-src/__tests__/
-
 # Development files
-.eslintrc.json
+src/
+__tests__/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+test-*.js
+test-*.ts
+
+# Configuration files
+.eslintrc.js
 eslint.config.js
+.prettierrc
+.prettierignore
 jest.config.ts
 tsconfig.json
 tsconfig.test.json
-.prettierrc
-.prettierignore
 
-# Development dependencies
-yarn.lock
-package-lock.json
-
-# Development scripts
-install.sh
-
-# Documentation (not needed in package)
-PROJECT_STRUCTURE.md
+# Documentation
+README.md
+CHANGELOG.md
 QUICK_START.md
-
-# AI review configuration
-.gemini/
-.claude/
+PROJECT_STRUCTURE.md
 .github/
+.claude/
 
-# Git files
-.git/
-.gitignore
+# Development tools
+.husky/
+.huskyrc
+lint-staged.config.js
 
-# IDE files
+# Environment
+.env.example
+
+# Build tools
+coverage/
+.nyc_output/
+
+# IDE
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Test files
-coverage/
-*.test.ts
-*.spec.ts
+# Logs
+*.log
+npm-debug.log*
 
 # Temporary files
 *.tmp
 *.temp
-*.log
 
-# Husky
-.husky/ 
+# Test files
+test-install.sh 

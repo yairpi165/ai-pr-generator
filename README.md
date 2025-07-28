@@ -22,12 +22,6 @@ This tool analyzes your Git diff, prompts for the PR type, title, and optional t
 npm install -g ai-pr-generator
 ```
 
-Or with yarn:
-
-```bash
-yarn global add ai-pr-generator
-```
-
 ### 2. Initialize
 
 Set up your API keys:
@@ -170,26 +164,26 @@ To automatically assign reviewers:
 # Clone and install
 git clone https://github.com/yairpi165/ai-pr-generator.git
 cd ai-pr-generator
-yarn install
+npm install
 
 # Build
-yarn build
+npm run build
 
 # Run locally
-yarn start
+npm start
 
 # Development mode
-yarn dev
+npm run dev
 ```
 
 ### Available Scripts
 ```bash
-yarn build          # Build TypeScript
-yarn test           # Run tests
-yarn lint           # Check linting
-yarn lint:fix       # Fix linting issues
-yarn format         # Format code
-yarn check          # Run all checks
+npm run build          # Build TypeScript
+npm test               # Run tests
+npm run lint           # Check linting
+npm run lint:fix       # Fix linting issues
+npm run format         # Format code
+npm run check          # Run all checks
 ```
 
 ## 🐛 Troubleshooting
@@ -238,8 +232,8 @@ The package will:
 ```bash
 git clone https://github.com/yairpi165/ai-pr-generator.git
 cd ai-pr-generator
-yarn install
-yarn build
+npm install
+npm run build
 ```
 
 ## 🤝 Contributing
@@ -249,8 +243,8 @@ We welcome contributions!
 1. Fork the repository
 2. Create a feature branch (`feat/`, `fix/`, `docs/`)
 3. Make your changes
-4. Test: `yarn test` and `yarn lint`
-5. Build and test: `yarn build && yarn start`
+4. Test: `npm test` and `npm run lint`
+5. Build and test: `npm run build && npm start`
 6. Open a pull request
 
 ## 📄 License

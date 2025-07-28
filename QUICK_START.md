@@ -8,12 +8,6 @@ Install globally via npm:
 npm install -g ai-pr-generator
 ```
 
-Or via yarn:
-
-```bash
-yarn global add ai-pr-generator
-```
-
 ## Initialization
 
 After installation, run the initialization command:

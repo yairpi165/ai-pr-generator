@@ -1,11 +1,8 @@
 #!/usr/bin/env sh
-set -e
+. "$(dirname -- "$0")/_/husky.sh"
 
-# Lint only staged files
-yarn lint-staged
+npm run lint-staged
 
-# Full project type‐check
-yarn tsc
+npm run tsc
 
-# Run all tests with coverage and fail if coverage is below threshold
-yarn test:coverage
+npm run test:coverage
