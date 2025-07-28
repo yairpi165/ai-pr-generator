@@ -1,0 +1,55 @@
+# Source files (not needed in published package)
+src/
+src/__tests__/
+
+# Development files
+.eslintrc.json
+eslint.config.js
+jest.config.ts
+tsconfig.json
+tsconfig.test.json
+.prettierrc
+.prettierignore
+
+# Development dependencies
+yarn.lock
+package-lock.json
+
+# Development scripts
+install.sh
+
+# Documentation (not needed in package)
+PROJECT_STRUCTURE.md
+QUICK_START.md
+
+# AI review configuration
+.gemini/
+.claude/
+.github/
+
+# Git files
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+coverage/
+*.test.ts
+*.spec.ts
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Husky
+.husky/ 

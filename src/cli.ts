@@ -16,15 +16,27 @@ import {
   loadReviewersConfig,
   UI_CONSTANTS,
 } from './domain/index.js'
+import { runInit } from './commands/init.js'
 
 /**
  * Parse command line arguments
  */
 export const parseArguments = (
   args: string[] = process.argv.slice(2)
-): { provider?: string; remainingArgs: string[] } => {
-  const config: { provider?: string; remainingArgs: string[] } = {
+): { command?: string; provider?: string; remainingArgs: string[] } => {
+  const config: {
+    command?: string
+    provider?: string
+    remainingArgs: string[]
+  } = {
     remainingArgs: [],
+  }
+
+  // Check for init command
+  if (args.length > 0 && args[0] === 'init') {
+    config.command = 'init'
+    config.remainingArgs = args.slice(1)
+    return config
   }
 
   // Find --provider flag anywhere in the arguments
@@ -47,9 +59,16 @@ export const parseArguments = (
  * Parse input from command line or interactive prompts
  */
 export const parseInput = async (config: {
+  command?: string
   provider?: string
   remainingArgs: string[]
 }): Promise<PROptions> => {
+  // Handle init command
+  if (config.command === 'init') {
+    await runInit()
+    process.exit(0)
+  }
+
   // If provider is specified, validate it (this would need to be implemented)
   if (config.provider) {
     console.log(`Using provider: ${config.provider}`)
@@ -75,13 +94,20 @@ export const parseInput = async (config: {
  */
 const runCLI = async (): Promise<void> => {
   try {
+    // Parse command line arguments or get interactive input
+    const config = parseArguments()
+
+    // Handle init command early
+    if (config.command === 'init') {
+      await runInit()
+      return
+    }
+
     console.log(chalk.blue.bold(`${UI_CONSTANTS.MESSAGES.WELCOME}\n`))
 
     // Load reviewers configuration
     loadReviewersConfig()
 
-    // Parse command line arguments or get interactive input
-    const config = parseArguments()
     const options = await parseInput(config)
 
     // Display selected options

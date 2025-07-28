@@ -10,9 +10,7 @@ import {
 import { GIT_CONSTANTS } from '../../../domain/git/constants.js'
 import type { GitRepository } from '../../../domain/git/types.js'
 
-// Mock child_process and fs
-jest.mock('child_process')
-jest.mock('fs')
+// child_process and fs are already mocked in setup.ts
 jest.mock('../../../domain/git/repository.js')
 
 import { execSync } from 'child_process'

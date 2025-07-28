@@ -11,8 +11,16 @@ const MockedGoogleGenerativeAI = GoogleGenerativeAI as jest.MockedClass<
 >
 
 describe('Gemini Provider', () => {
-  let mockGenerateContent: jest.MockedFunction<any>
-  let mockGetGenerativeModel: jest.MockedFunction<any>
+  let mockGenerateContent: jest.MockedFunction<
+    () => Promise<{ response: { text: () => string } }>
+  >
+  let mockGetGenerativeModel: jest.MockedFunction<
+    () => {
+      generateContent: jest.MockedFunction<
+        () => Promise<{ response: { text: () => string } }>
+      >
+    }
+  >
   let mockGoogleAIInstance: jest.Mocked<GoogleGenerativeAI>
 
   beforeEach(() => {
@@ -25,7 +33,7 @@ describe('Gemini Provider', () => {
     // Create mock GoogleGenerativeAI instance
     mockGoogleAIInstance = {
       getGenerativeModel: mockGetGenerativeModel,
-    } as any
+    } as unknown as jest.Mocked<GoogleGenerativeAI>
 
     // Setup mock getGenerativeModel to return object with generateContent
     mockGetGenerativeModel.mockReturnValue({

@@ -4,7 +4,8 @@
       "Bash(yarn test:*)",
       "Bash(npm test:*)",
       "Bash(npx jest:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

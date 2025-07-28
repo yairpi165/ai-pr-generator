@@ -92,7 +92,7 @@ const config: Config = {
 
   // Transform ignore patterns for ES modules
   transformIgnorePatterns: [
-    'node_modules/(?!(inquirer|chalk|clipboardy|open|#ansi-styles|ansi-styles|supports-color)/)',
+    'node_modules/(?!(inquirer|chalk|clipboardy|open|#ansi-styles|ansi-styles|supports-color|@google/generative-ai|openai)/)',
   ],
 
   // Test timeout

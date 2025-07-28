@@ -44,7 +44,14 @@ describe('UI Interactive Components', () => {
 
       await getInteractiveInput()
 
-      const promptCall = mockInquirer.prompt.mock.calls[0][0] as any[]
+      const promptCall = mockInquirer.prompt.mock
+        .calls[0][0] as unknown as Array<{
+        type: string
+        name: string
+        message: string
+        choices?: Array<{ name: string; value: string }>
+        default?: string
+      }>
       expect(promptCall).toHaveLength(4)
 
       // Check PR type question
@@ -90,7 +97,14 @@ describe('UI Interactive Components', () => {
 
       await getInteractiveInput()
 
-      const promptCall = mockInquirer.prompt.mock.calls[0][0] as any[]
+      const promptCall = mockInquirer.prompt.mock
+        .calls[0][0] as unknown as Array<{
+        type: string
+        name: string
+        message: string
+        choices?: Array<{ name: string; value: string }>
+        default?: string
+      }>
       const prTypeQuestion = promptCall[0]
 
       expect(prTypeQuestion.choices).toBe(PR_CONSTANTS.PR_TYPES)
@@ -224,7 +238,14 @@ describe('UI Interactive Components', () => {
 
       await getInteractiveInput()
 
-      const promptCall = mockInquirer.prompt.mock.calls[0][0] as any[]
+      const promptCall = mockInquirer.prompt.mock
+        .calls[0][0] as unknown as Array<{
+        type: string
+        name: string
+        message: string
+        choices?: Array<{ name: string; value: string }>
+        default?: string
+      }>
 
       expect(promptCall[0].message).toMatch(/^🔧/)
       expect(promptCall[1].message).toMatch(/^📝/)
@@ -242,7 +263,14 @@ describe('UI Interactive Components', () => {
 
       await getInteractiveInput()
 
-      const promptCall = mockInquirer.prompt.mock.calls[0][0] as any[]
+      const promptCall = mockInquirer.prompt.mock
+        .calls[0][0] as unknown as Array<{
+        type: string
+        name: string
+        message: string
+        choices?: Array<{ name: string; value: string }>
+        default?: string
+      }>
 
       expect(promptCall[0].name).toBe('prType')
       expect(promptCall[1].name).toBe('prTitle')
@@ -260,7 +288,14 @@ describe('UI Interactive Components', () => {
 
       await getInteractiveInput()
 
-      const promptCall = mockInquirer.prompt.mock.calls[0][0] as any[]
+      const promptCall = mockInquirer.prompt.mock
+        .calls[0][0] as unknown as Array<{
+        type: string
+        name: string
+        message: string
+        choices?: Array<{ name: string; value: string }>
+        default?: string
+      }>
 
       expect(promptCall[0].type).toBe('list') // PR type is a selection
       expect(promptCall[1].type).toBe('input') // Title is text input
@@ -278,7 +313,14 @@ describe('UI Interactive Components', () => {
 
       await getInteractiveInput()
 
-      const promptCall = mockInquirer.prompt.mock.calls[0][0] as any[]
+      const promptCall = mockInquirer.prompt.mock
+        .calls[0][0] as unknown as Array<{
+        type: string
+        name: string
+        message: string
+        choices?: Array<{ name: string; value: string }>
+        default?: string
+      }>
 
       expect(promptCall[1].default).toBe('') // prTitle default
       expect(promptCall[2].default).toBe('') // ticket default
@@ -338,16 +380,25 @@ describe('UI Interactive Components', () => {
       // Verify that prompt was called with an array of questions
       expect(mockInquirer.prompt).toHaveBeenCalledWith(expect.any(Array))
 
-      const promptCall = mockInquirer.prompt.mock.calls[0][0] as any[]
+      const promptCall = mockInquirer.prompt.mock
+        .calls[0][0] as unknown as Array<{
+        type: string
+        name: string
+        message: string
+        choices?: Array<{ name: string; value: string }>
+        default?: string
+      }>
       expect(Array.isArray(promptCall)).toBe(true)
       expect(promptCall.length).toBe(4)
 
       // Verify each question has required properties
-      promptCall.forEach((question: any) => {
-        expect(question).toHaveProperty('type')
-        expect(question).toHaveProperty('name')
-        expect(question).toHaveProperty('message')
-      })
+      promptCall.forEach(
+        (question: { type: string; name: string; message: string }) => {
+          expect(question).toHaveProperty('type')
+          expect(question).toHaveProperty('name')
+          expect(question).toHaveProperty('message')
+        }
+      )
     })
   })
 })
