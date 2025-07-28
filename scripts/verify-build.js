@@ -35,5 +35,52 @@ if (missingFiles.length > 0) {
   process.exit(1)
 }
 
+// Check executable permissions on cli.js
+const cliPath = 'dist/cli.js'
+try {
+  const stats = fs.statSync(cliPath)
+  const isExecutable = (stats.mode & fs.constants.S_IXUSR) !== 0
+
+  if (!isExecutable) {
+    console.warn('⚠️  Warning: dist/cli.js is not executable')
+    console.warn('This might cause issues when installing globally.')
+    console.warn('Consider running: chmod +x dist/cli.js')
+  } else {
+    console.log('✅ dist/cli.js has executable permissions')
+  }
+} catch {
+  console.warn(
+    '⚠️  Warning: Could not check executable permissions on dist/cli.js'
+  )
+}
+
+// Check file sizes to ensure they're not empty
+const emptyFiles = requiredFiles.filter(file => {
+  try {
+    const stats = fs.statSync(file)
+    return stats.size === 0
+  } catch {
+    return false
+  }
+})
+
+if (emptyFiles.length > 0) {
+  console.warn('⚠️  Warning: Some files appear to be empty:')
+  emptyFiles.forEach(file => console.warn(`  - ${file}`))
+}
+
+// Check that cli.js has the correct shebang
+try {
+  const cliContent = fs.readFileSync(cliPath, 'utf8')
+  if (!cliContent.startsWith('#!/usr/bin/env node')) {
+    console.warn('⚠️  Warning: dist/cli.js does not start with correct shebang')
+    console.warn('Expected: #!/usr/bin/env node')
+  } else {
+    console.log('✅ dist/cli.js has correct shebang')
+  }
+} catch {
+  console.warn('⚠️  Warning: Could not check shebang in dist/cli.js')
+}
+
 console.log('✅ Build verification passed!')
 console.log(`All ${requiredFiles.length} required files are present.`)

@@ -32,22 +32,30 @@ export const parseArguments = (
     remainingArgs: [],
   }
 
-  // Check for init command
+  // Handle version flag early
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(
+      `ai-pr-generator v${process.env.npm_package_version || '1.0.0'}`
+    )
+    process.exit(0)
+  }
+
+  // Handle init command
   if (args.length > 0 && args[0] === 'init') {
     config.command = 'init'
     config.remainingArgs = args.slice(1)
     return config
   }
 
-  // Find --provider flag anywhere in the arguments
-  const providerIndex = args.findIndex(arg => arg === '--provider')
-  if (providerIndex !== -1 && args[providerIndex + 1]) {
+  // Handle provider flag
+  const providerIndex = args.findIndex(
+    arg => arg === '--provider' || arg === '-p'
+  )
+  if (providerIndex !== -1 && providerIndex + 1 < args.length) {
     config.provider = args[providerIndex + 1]
-    // Remove --provider and its value from args
-    config.remainingArgs = [
-      ...args.slice(0, providerIndex),
-      ...args.slice(providerIndex + 2),
-    ]
+    config.remainingArgs = args.filter(
+      (_, index) => index !== providerIndex && index !== providerIndex + 1
+    )
   } else {
     config.remainingArgs = args
   }
@@ -57,14 +65,25 @@ export const parseArguments = (
 
 /**
  * Parse input from command line or interactive prompts
- * Note: init command should be handled in runCLI() before calling this function
- * This function filters out 'init' from remainingArgs to prevent it from being parsed as a PR type
+ *
+ * @param config - Configuration object containing command, provider, and remaining arguments
+ * @returns Promise<PROptions> - Parsed PR options for generation
+ *
+ * @throws {Error} If init command is passed (should be handled before calling this function)
+ *
+ * Note: This function should only be called after init commands have been filtered out
+ * in runCLI(). The function includes runtime assertions to ensure type safety.
  */
 export const parseInput = async (config: {
   command?: string
   provider?: string
   remainingArgs: string[]
 }): Promise<PROptions> => {
+  // Runtime assertion: init commands should never reach this function
+  if (config.command === 'init' || config.remainingArgs.includes('init')) {
+    throw new Error('Init command should be handled before calling parseInput')
+  }
+
   if (
     config.provider &&
     !['openai', 'gemini', 'GPT', 'Gemini'].includes(config.provider)
@@ -76,16 +95,13 @@ export const parseInput = async (config: {
     console.log(`Using provider: ${config.provider}`)
   }
 
-  // Filter out init command from remainingArgs to prevent it from being parsed as PR type
-  const prArgs = config.remainingArgs.filter(arg => arg !== 'init')
-
-  if (prArgs.length > 0) {
+  if (config.remainingArgs.length > 0) {
     return {
-      prType: prArgs[0],
-      prTitle: prArgs[1] || '',
+      prType: config.remainingArgs[0],
+      prTitle: config.remainingArgs[1] || '',
       ticket: '',
       explanation: '',
-    }
+    } satisfies PROptions
   }
 
   return await getInteractiveInput()
@@ -93,13 +109,19 @@ export const parseInput = async (config: {
 
 /**
  * Main CLI function
+ *
+ * Handles the complete CLI flow:
+ * 1. Parse command line arguments
+ * 2. Handle init command early (before parseInput)
+ * 3. Parse PR options (init commands filtered out)
+ * 4. Generate and display PR description
  */
 const runCLI = async (): Promise<void> => {
   try {
     // Parse command line arguments or get interactive input
     const config = parseArguments()
 
-    // Handle init command early
+    // Handle init command early - this prevents init from reaching parseInput
     if (config.command === 'init') {
       await runInit()
       return
