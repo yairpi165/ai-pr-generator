@@ -37,16 +37,14 @@ This will guide you through setting up:
 
 ### 3. Use
 
-#### Interactive Mode
 ```bash
+# Interactive mode
 genpr
-```
 
-#### One-liner Mode
-```bash
-genpr feat "Add user authentication"
-genpr bugfix "Fix login button alignment"
-genpr refactor "Extract user service"
+# One-liner mode
+genpr feat "Add new feature"
+genpr fix "Fix bug in login"
+genpr docs "Update README"
 ```
 
 ## 🔐 API Keys Setup
@@ -156,7 +154,7 @@ To automatically assign reviewers:
 ## 🛠️ Development
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20+ (for development)
 - Git repository with changes
 
 ### Local Development
