@@ -66,9 +66,27 @@ You'll need at least one AI provider:
 
 ## ⚙️ Configuration Management
 
+### Available AI Models
+
+The tool supports multiple AI models from OpenAI and Google Gemini:
+
+#### OpenAI Models
+- **GPT-4o Mini** (`gpt-4o-mini`) - Fast and cost-effective for most use cases
+- **GPT-4o** (`gpt-4o`) - Best quality for complex tasks
+- **GPT-4 Turbo** (`gpt-4-turbo`) - Balanced performance and quality
+- **Custom Models** - Use any OpenAI-compatible model
+
+#### Gemini Models
+- **Gemini 2.0 Flash** (`gemini-2.0-flash`) - Fast and efficient
+- **Gemini 2.0 Pro** (`gemini-2.0-pro`) - Best quality for complex tasks
+- **Gemini 1.5 Pro** (`gemini-1.5-pro`) - Balanced performance and quality
+- **Custom Models** - Use any Gemini-compatible model
+
 ### Initial Setup
 During `genpr init`, you can configure:
-- **AI Models**: Choose from GPT-4o, GPT-4 Turbo, Gemini 2.0 Flash, Gemini 2.0 Pro, or custom models
+- **AI Models**: Choose from:
+  - **OpenAI**: GPT-4o Mini (Fast & Cheap), GPT-4o (Best Quality), GPT-4 Turbo (Balanced), or custom models
+  - **Gemini**: Gemini 2.0 Flash (Fast), Gemini 2.0 Pro (Best Quality), Gemini 1.5 Pro (Balanced), or custom models
 - **Default Provider**: Set your preferred AI provider (OpenAI or Gemini)
 - **Auto-select**: Let the tool automatically choose the best available provider
 
@@ -86,9 +104,9 @@ OPENAI_API_KEY=your_openai_key
 GEMINI_API_KEY=your_gemini_key
 
 # AI Models
-OPENAI_MODEL=gpt-4o-mini
-GEMINI_MODEL=gemini-2.0-flash
-DEFAULT_PROVIDER=openai
+OPENAI_MODEL=gpt-4o-mini  # Options: gpt-4o-mini, gpt-4o, gpt-4-turbo, or custom
+GEMINI_MODEL=gemini-2.0-flash  # Options: gemini-2.0-flash, gemini-2.0-pro, gemini-1.5-pro, or custom
+DEFAULT_PROVIDER=openai  # Options: openai, gemini, or empty for auto-select
 
 # Git Hosting (Optional)
 BITBUCKET_EMAIL=your_email
