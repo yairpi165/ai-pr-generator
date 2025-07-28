@@ -1,15 +1,4 @@
 /**
- * Environment variables interface
- */
-export type EnvironmentConfig = {
-  OPENAI_API_KEY?: string
-  GEMINI_API_KEY?: string
-  BITBUCKET_EMAIL?: string
-  BITBUCKET_TOKEN?: string
-  GITHUB_TOKEN?: string
-}
-
-/**
  * Bitbucket PR data interface
  */
 export type BitbucketPRData = {
