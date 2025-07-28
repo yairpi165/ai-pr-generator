@@ -5,14 +5,7 @@ import fs from 'fs'
 import path from 'path'
 import { execSync } from 'child_process'
 import inquirer from 'inquirer'
-
-interface InitOptions {
-  openaiKey?: string
-  geminiKey?: string
-  bitbucketEmail?: string
-  bitbucketToken?: string
-  githubToken?: string
-}
+import type { InitOptions } from './types.js'
 
 /**
  * Check if Node.js is installed and has correct version
@@ -26,6 +19,9 @@ const checkNodeVersion = (): boolean => {
       console.log(chalk.red('❌ Node.js version 18+ is required.'))
       console.log(chalk.red(`   Current version: ${nodeVersion}`))
       console.log(chalk.blue('   Visit: https://nodejs.org/'))
+      console.log(chalk.yellow('\n🔧 Quick Fix:'))
+      console.log(chalk.yellow('   Using nvm: nvm install 18 && nvm use 18'))
+      console.log(chalk.yellow('   Or download from: https://nodejs.org/'))
       return false
     }
 
@@ -37,6 +33,14 @@ const checkNodeVersion = (): boolean => {
       )
     )
     console.log(chalk.blue('   Visit: https://nodejs.org/'))
+    console.log(chalk.yellow('\n🔧 Installation Options:'))
+    console.log(chalk.yellow('   • Download from: https://nodejs.org/'))
+    console.log(
+      chalk.yellow(
+        '   • Using nvm: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash'
+      )
+    )
+    console.log(chalk.yellow('   • Using Homebrew: brew install node'))
     return false
   }
   return true
@@ -54,6 +58,11 @@ const checkGit = (): void => {
       chalk.yellow('⚠️  Git is not installed. Some features may not work.')
     )
     console.log(chalk.blue('   Visit: https://git-scm.com/'))
+    console.log(chalk.yellow('\n🔧 Installation Options:'))
+    console.log(chalk.yellow('   • Download from: https://git-scm.com/'))
+    console.log(chalk.yellow('   • Using Homebrew: brew install git'))
+    console.log(chalk.yellow('   • Using apt: sudo apt-get install git'))
+    console.log(chalk.yellow('   • Using yum: sudo yum install git'))
   }
 }
 
@@ -319,6 +328,80 @@ export const runInit = async (options: InitOptions = {}): Promise<void> => {
     console.log(
       chalk.red(error instanceof Error ? error.message : String(error))
     )
+
+    // Provide specific error guidance based on error type
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase()
+
+      if (
+        errorMessage.includes('permission') ||
+        errorMessage.includes('eacces')
+      ) {
+        console.log(
+          chalk.yellow('\n🔧 Permission Error - Try these solutions:')
+        )
+        console.log(
+          chalk.yellow('1. Run with sudo: sudo npm install -g ai-pr-generator')
+        )
+        console.log(
+          chalk.yellow(
+            '2. Fix npm permissions: npm config set prefix ~/.npm-global'
+          )
+        )
+        console.log(chalk.yellow('3. Use nvm to manage Node.js versions'))
+      } else if (
+        errorMessage.includes('network') ||
+        errorMessage.includes('timeout')
+      ) {
+        console.log(chalk.yellow('\n🌐 Network Error - Try these solutions:'))
+        console.log(chalk.yellow('1. Check your internet connection'))
+        console.log(chalk.yellow('2. Try again in a few minutes'))
+        console.log(chalk.yellow('3. Use a different network if available'))
+      } else if (
+        errorMessage.includes('disk') ||
+        errorMessage.includes('space')
+      ) {
+        console.log(
+          chalk.yellow('\n💾 Disk Space Error - Try these solutions:')
+        )
+        console.log(chalk.yellow('1. Free up disk space'))
+        console.log(chalk.yellow('2. Clear npm cache: npm cache clean --force'))
+        console.log(chalk.yellow('3. Check available space: df -h'))
+      } else if (
+        errorMessage.includes('typescript') ||
+        errorMessage.includes('tsc')
+      ) {
+        console.log(
+          chalk.yellow('\n🔧 TypeScript Error - Try these solutions:')
+        )
+        console.log(
+          chalk.yellow('1. Update TypeScript: npm install -g typescript')
+        )
+        console.log(chalk.yellow('2. Clear node_modules and reinstall'))
+        console.log(chalk.yellow('3. Check TypeScript version: tsc --version'))
+      } else {
+        console.log(chalk.yellow('\n🔧 General Error - Try these solutions:'))
+        console.log(chalk.yellow('1. Clear npm cache: npm cache clean --force'))
+        console.log(
+          chalk.yellow('2. Delete node_modules and package-lock.json')
+        )
+        console.log(chalk.yellow('3. Reinstall: npm install'))
+        console.log(chalk.yellow('4. Check Node.js version: node --version'))
+      }
+    }
+
+    console.log(chalk.blue('\n📖 For more help:'))
+    console.log(
+      chalk.blue(
+        '   GitHub Issues: https://github.com/yairpi165/ai-pr-generator/issues'
+      )
+    )
+    console.log(
+      chalk.blue(
+        '   Documentation: https://github.com/yairpi165/ai-pr-generator#readme'
+      )
+    )
+
     return
   }
 }

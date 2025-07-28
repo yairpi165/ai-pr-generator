@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import chalk from 'chalk'
+import type { PROptions } from './domain/pr/types.js'
 import {
   generatePRDescription,
   savePRToFile,
@@ -12,7 +13,6 @@ import {
   displayError,
   handleOutputOptions,
   outputPath,
-  type PROptions,
   loadReviewersConfig,
   UI_CONSTANTS,
 } from './domain/index.js'
@@ -57,24 +57,32 @@ export const parseArguments = (
 
 /**
  * Parse input from command line or interactive prompts
+ * Note: init command should be handled in runCLI() before calling this function
+ * This function filters out 'init' from remainingArgs to prevent it from being parsed as a PR type
  */
 export const parseInput = async (config: {
   command?: string
   provider?: string
   remainingArgs: string[]
 }): Promise<PROptions> => {
+  if (
+    config.provider &&
+    !['openai', 'gemini', 'GPT', 'Gemini'].includes(config.provider)
+  ) {
+    console.warn(`Unknown provider: ${config.provider}`)
+  }
   // If provider is specified, validate it (this would need to be implemented)
   if (config.provider) {
     console.log(`Using provider: ${config.provider}`)
   }
 
-  // Use remaining arguments (after --provider flag) for PR options
-  const remainingArgs = config.remainingArgs
+  // Filter out init command from remainingArgs to prevent it from being parsed as PR type
+  const prArgs = config.remainingArgs.filter(arg => arg !== 'init')
 
-  if (remainingArgs.length > 0) {
+  if (prArgs.length > 0) {
     return {
-      prType: remainingArgs[0],
-      prTitle: remainingArgs[1] || '',
+      prType: prArgs[0],
+      prTitle: prArgs[1] || '',
       ticket: '',
       explanation: '',
     }
