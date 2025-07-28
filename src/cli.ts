@@ -63,12 +63,6 @@ export const parseInput = async (config: {
   provider?: string
   remainingArgs: string[]
 }): Promise<PROptions> => {
-  // Handle init command
-  if (config.command === 'init') {
-    await runInit()
-    process.exit(0)
-  }
-
   // If provider is specified, validate it (this would need to be implemented)
   if (config.provider) {
     console.log(`Using provider: ${config.provider}`)
