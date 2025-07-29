@@ -17,6 +17,11 @@ on:
         description: 'Custom version (if version is set to custom)'
         required: false
         type: string
+      publish_to_npm:
+        description: 'Publish to NPM Package Registry'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   release:
@@ -110,3 +115,38 @@ jobs:
         run: |
           git checkout -b release/v${{ steps.version.outputs.VERSION }}
           git push origin release/v${{ steps.version.outputs.VERSION }}
+
+  publish-npm:
+    needs: release
+    if: ${{ github.event.inputs.publish_to_npm == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Update package.json version
+        run: |
+          if [ "${{ github.event.inputs.version }}" = "custom" ]; then
+            npm version ${{ github.event.inputs.custom_version }} --no-git-tag-version
+          else
+            npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          fi
+
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
