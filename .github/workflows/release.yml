@@ -124,7 +124,7 @@ jobs:
           git config --local user.name "GitHub Action"
 
           # Create branch name
-          branch_name="version-bump/v${{ needs.determine-version.outputs.version }}"
+          branch_name="version/v${{ needs.determine-version.outputs.version }}"
 
           # Create and checkout new branch
           git checkout -b "$branch_name"
@@ -204,6 +204,9 @@ jobs:
     needs: [determine-version, create-version-pr]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Wait for PR merge
         run: |
           echo "⏳ Waiting for PR #${{ needs.create-version-pr.outputs.pr_number }} to be merged..."
