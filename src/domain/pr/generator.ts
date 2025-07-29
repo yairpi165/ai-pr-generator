@@ -212,6 +212,14 @@ export const savePRToFile = (content: string): string => {
  */
 export const getCurrentProvider = (): string => {
   const config = createPRGenerator()
+
+  // If there's a default provider configured, return it
+  const defaultProvider = config.aiManager.getDefaultProvider()
+  if (defaultProvider) {
+    return defaultProvider
+  }
+
+  // Otherwise return the first available provider or 'None'
   const providers = config.aiManager.getAvailableProviders()
   return providers[0]?.name || 'None'
 }

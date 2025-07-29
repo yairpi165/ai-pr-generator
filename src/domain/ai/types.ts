@@ -50,6 +50,7 @@ export type ProviderManagerConfig = {
 export type ProviderManager = {
   hasAvailableProviders(): boolean
   getAvailableProviders(): AIProvider[]
+  getDefaultProvider(): string | null
   generateContent(prompt: string): Promise<AIResponse>
   generateContentWithProvider(
     providerName: string,

@@ -36,6 +36,7 @@ describe('PR Generator', () => {
     getAvailableProviders: jest.fn(),
     generateContent: jest.fn(),
     generateContentWithProvider: jest.fn(),
+    getDefaultProvider: jest.fn(),
   }
 
   const mockDiff = `diff --git a/src/feature.ts b/src/feature.ts
@@ -45,7 +46,7 @@ index abc123..def456 100644
 @@ -1,3 +1,4 @@
 export const feature = () => {
 +  // New implementation
-   return 'enhanced feature'
+  return 'enhanced feature'
  }`
 
   const mockTitleResponse = { text: 'Add enhanced feature functionality' }
@@ -360,7 +361,10 @@ This PR enhances the feature functionality with improved implementation.
   })
 
   describe('getCurrentProvider', () => {
-    it('should return current AI provider name', () => {
+    it('should return default provider when configured', () => {
+      mockProviderManager.getDefaultProvider = jest
+        .fn()
+        .mockReturnValue('OpenAI')
       mockProviderManager.getAvailableProviders.mockReturnValue([
         { name: 'OpenAI', isAvailable: () => true, generateContent: jest.fn() },
         { name: 'Gemini', isAvailable: () => true, generateContent: jest.fn() },
@@ -369,9 +373,24 @@ This PR enhances the feature functionality with improved implementation.
       const provider = getCurrentProvider()
 
       expect(provider).toBe('OpenAI')
+      expect(mockProviderManager.getDefaultProvider).toHaveBeenCalled()
+    })
+
+    it('should return first available provider when no default is configured', () => {
+      mockProviderManager.getDefaultProvider = jest.fn().mockReturnValue(null)
+      mockProviderManager.getAvailableProviders.mockReturnValue([
+        { name: 'Gemini', isAvailable: () => true, generateContent: jest.fn() },
+        { name: 'OpenAI', isAvailable: () => true, generateContent: jest.fn() },
+      ])
+
+      const provider = getCurrentProvider()
+
+      expect(provider).toBe('Gemini')
+      expect(mockProviderManager.getDefaultProvider).toHaveBeenCalled()
     })
 
     it('should return "None" when no providers available', () => {
+      mockProviderManager.getDefaultProvider = jest.fn().mockReturnValue(null)
       mockProviderManager.getAvailableProviders.mockReturnValue([])
 
       const provider = getCurrentProvider()
