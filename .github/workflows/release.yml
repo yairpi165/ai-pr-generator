@@ -104,7 +104,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GH_ACTIONS_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -130,7 +130,7 @@ jobs:
           git checkout -b "$branch_name"
 
           # Update package.json version
-          npm version ${{ needs.determine-version.outputs.version }} --no-git-tag-version --allow-same-version
+          npm version ${{ needs.determine-version.outputs.version }}
 
           # Commit changes
           git add package.json
@@ -145,7 +145,7 @@ jobs:
         id: create-pr
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GH_ACTIONS_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ env.BRANCH_NAME }}
           title: '🚀 Bump version to v${{ needs.determine-version.outputs.version }}'
           body: |
@@ -192,6 +192,8 @@ jobs:
           base: main
 
       - name: Get PR number
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Get the PR number from the created PR
           pr_number=$(gh pr list --head "${{ env.BRANCH_NAME }}" --json number --jq '.[0].number')
@@ -211,6 +213,8 @@ jobs:
           echo "This workflow will wait until the PR is merged."
 
       - name: Check PR status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if PR is merged
           pr_state=$(gh pr view ${{ needs.create-version-pr.outputs.pr_number }} --json state,merged --jq '.state')
@@ -290,7 +294,7 @@ jobs:
       - name: Generate PR list
         id: pr-list
         env:
-          GH_TOKEN: ${{ secrets.GH_ACTIONS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           previous_tag="${{ steps.previous-tag.outputs.previous_tag }}"
           current_version="v${{ needs.determine-version.outputs.version }}"
