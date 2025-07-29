@@ -38,6 +38,13 @@ export const createProviderManager = (config: AIConfig) => {
   }
 
   /**
+   * Get the default provider name if configured
+   */
+  const getDefaultProvider = (): string | null => {
+    return config.defaultProvider || null
+  }
+
+  /**
    * Generate content using the preferred provider or fallback
    */
   const generateContent = async (prompt: string): Promise<AIResponse> => {
@@ -167,6 +174,7 @@ export const createProviderManager = (config: AIConfig) => {
   return {
     hasAvailableProviders,
     getAvailableProviders,
+    getDefaultProvider,
     generateContent,
     generateContentWithProvider,
   }
