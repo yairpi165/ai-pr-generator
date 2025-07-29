@@ -217,10 +217,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if PR is merged
-          pr_state=$(gh pr view ${{ needs.create-version-pr.outputs.pr_number }} --json state,merged --jq '.state')
-          pr_merged=$(gh pr view ${{ needs.create-version-pr.outputs.pr_number }} --json state,merged --jq '.merged')
+          pr_state=$(gh pr view ${{ needs.create-version-pr.outputs.pr_number }} --json state,mergedAt --jq '.state')
+          pr_merged_at=$(gh pr view ${{ needs.create-version-pr.outputs.pr_number }} --json state,mergedAt --jq '.mergedAt')
 
-          if [ "$pr_state" = "CLOSED" ] && [ "$pr_merged" = "true" ]; then
+          if [ "$pr_state" = "CLOSED" ] && [ "$pr_merged_at" != "null" ]; then
             echo "✅ PR has been merged! Continuing with release..."
           else
             echo "❌ PR has not been merged yet. Please merge the PR to continue."
