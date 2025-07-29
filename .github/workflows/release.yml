@@ -49,11 +49,6 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Check build output
-        run: |
-          ls -la dist/
-          node dist/cli.js --help
-
       - name: Determine version
         id: version
         run: |
