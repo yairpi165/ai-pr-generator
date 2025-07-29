@@ -122,9 +122,35 @@ jobs:
           git config --local user.name "GitHub Action"
           git add package.json
           git commit -m "Bump version to ${{ needs.determine-version.outputs.version }}"
-          git tag v${{ needs.determine-version.outputs.version }}
+
+          # Check if tag already exists
+          if git rev-parse "v${{ needs.determine-version.outputs.version }}" >/dev/null 2>&1; then
+            echo "⚠️  Tag v${{ needs.determine-version.outputs.version }} already exists, skipping tag creation"
+          else
+            git tag v${{ needs.determine-version.outputs.version }}
+            echo "✅ Created tag v${{ needs.determine-version.outputs.version }}"
+          fi
+
           git push origin main
-          git push origin v${{ needs.determine-version.outputs.version }}
+
+          # Push tag only if it was created
+          if ! git rev-parse "v${{ needs.determine-version.outputs.version }}" >/dev/null 2>&1; then
+            git push origin v${{ needs.determine-version.outputs.version }}
+            echo "✅ Pushed tag v${{ needs.determine-version.outputs.version }}"
+          else
+            echo "⚠️  Tag already exists, skipping push"
+          fi
+
+      - name: Verify Git tag exists
+        run: |
+          # Verify that the Git tag exists before creating the release
+          if ! git rev-parse "v${{ needs.determine-version.outputs.version }}" >/dev/null 2>&1; then
+            echo "❌ Error: Git tag v${{ needs.determine-version.outputs.version }} does not exist!"
+            echo "Cannot create release without a valid Git tag."
+            exit 1
+          fi
+
+          echo "✅ Git tag v${{ needs.determine-version.outputs.version }} exists"
 
       - name: Create Release
         uses: actions/create-release@v1
@@ -135,6 +161,8 @@ jobs:
           release_name: Release v${{ needs.determine-version.outputs.version }}
           body: |
             ## 🚀 Release v${{ needs.determine-version.outputs.version }}
+
+            ${{ needs.determine-version.outputs.version == '1.0.0' && '🎉 **Initial Release!** This is the first stable version of ai-pr-generator.' || '' }}
 
             ### ✨ Features
             - AI-powered PR generation
