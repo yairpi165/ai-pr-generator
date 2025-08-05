@@ -22,7 +22,7 @@ describe('Config Command', () => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation()
 
     // Default path mocks
-    mockPath.join.mockImplementation((...args) => args.join('/'))
+    // mockPath.join.mockImplementation((...args) => args.join('/'))
 
     // Default process mocks
     const mockCwd = jest.fn().mockReturnValue('/test/project')

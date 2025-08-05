@@ -8,4 +8,11 @@ export { CONFIG_CONSTANTS } from './constants.js'
 export { aiConfig } from './environment.js'
 
 // Paths
-export { projectRoot, outputPath, diffPath, reviewersPath } from './paths.js'
+export {
+  getProjectRoot,
+  getProjectPath,
+  getEnvPath,
+  getOutputPath,
+  getDiffPath,
+  getReviewersPath,
+} from './paths.js'

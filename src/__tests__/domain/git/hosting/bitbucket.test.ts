@@ -1,5 +1,13 @@
 // Mock external dependencies at module level
 // open and chalk are already mocked in setup.ts
+jest.mock('../../../../domain/config/paths.js', () => ({
+  getProjectRoot: jest.fn(() => '/test/project/root'),
+  getProjectPath: jest.fn((file: string) => `/test/project/root/${file}`),
+  getEnvPath: jest.fn(() => '/test/project/root/.env'),
+  getOutputPath: jest.fn((file: string) => `/test/project/root/${file}`),
+  getDiffPath: jest.fn((file: string) => `/test/project/root/${file}`),
+  getReviewersPath: jest.fn(() => '/test/project/root/reviewers.json'),
+}))
 jest.mock('../../../../domain/config/constants.js', () => ({
   CONFIG_CONSTANTS: {
     API: {

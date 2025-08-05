@@ -2,6 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { PR_CONSTANTS } from './constants.js'
 import type { GitPlatform } from '../git/types.js'
+import { getProjectPath } from '../config/paths.js'
 
 import type { Reviewer, ReviewersConfig, ReviewersState } from './types.js'
 
@@ -17,7 +18,7 @@ const state: ReviewersState = {
 export const loadReviewersConfig = (configPath?: string): void => {
   try {
     const defaultPath =
-      configPath || path.join(process.cwd(), PR_CONSTANTS.REVIEWERS_FILE)
+      configPath || getProjectPath(PR_CONSTANTS.REVIEWERS_FILE)
 
     if (fs.existsSync(defaultPath)) {
       const configData = fs.readFileSync(defaultPath, 'utf8')

@@ -1,3 +1,5 @@
+import { getProjectRoot } from './paths.js'
+
 /**
  * Configuration module constants
  */
@@ -11,7 +13,7 @@ export const CONFIG_CONSTANTS = {
 
   // File paths
   PATHS: {
-    PROJECT_ROOT: process.cwd(),
+    PROJECT_ROOT: getProjectRoot(),
     OUTPUT_FILE: 'pr-description.md',
     DIFF_FILE: 'diff.txt',
     REVIEWERS_FILE: 'reviewers.json',

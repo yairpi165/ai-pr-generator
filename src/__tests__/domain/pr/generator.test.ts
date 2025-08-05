@@ -9,14 +9,14 @@ import {
 // Mock dependencies
 // fs is already mocked in setup.ts
 jest.mock('../../../domain/config/index.js', () => ({
-  outputPath: '/path/to/pr-description.md',
+  getOutputPath: jest.fn(() => '/path/to/pr-description.md'),
   aiConfig: jest.fn(),
 }))
 jest.mock('../../../domain/git/index.js')
 jest.mock('../../../domain/ai/index.js')
 
 import fs from 'fs'
-import { outputPath, aiConfig } from '../../../domain/config/index.js'
+import { getOutputPath, aiConfig } from '../../../domain/config/index.js'
 import { generateDiff } from '../../../domain/git/index.js'
 import { createProviderManager } from '../../../domain/ai/index.js'
 import type { AIConfig, ProviderManager } from '../../../domain/ai/types.js'
@@ -324,11 +324,11 @@ This PR enhances the feature functionality with improved implementation.
       const result = savePRToFile(content)
 
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
-        outputPath,
+        getOutputPath(),
         content,
         'utf8'
       )
-      expect(result).toBe(outputPath)
+      expect(result).toBe(getOutputPath())
     })
 
     it('should handle file writing errors', () => {
@@ -342,8 +342,12 @@ This PR enhances the feature functionality with improved implementation.
     it('should save empty content', () => {
       const result = savePRToFile('')
 
-      expect(mockFs.writeFileSync).toHaveBeenCalledWith(outputPath, '', 'utf8')
-      expect(result).toBe(outputPath)
+      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        getOutputPath(),
+        '',
+        'utf8'
+      )
+      expect(result).toBe(getOutputPath())
     })
 
     it('should handle large content', () => {
@@ -352,11 +356,11 @@ This PR enhances the feature functionality with improved implementation.
       const result = savePRToFile(largeContent)
 
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
-        outputPath,
+        getOutputPath(),
         largeContent,
         'utf8'
       )
-      expect(result).toBe(outputPath)
+      expect(result).toBe(getOutputPath())
     })
   })
 

@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { outputPath } from '../config/index.js'
+import { getOutputPath } from '../config/index.js'
 import { aiConfig } from '../config/index.js'
 import { generateDiff } from '../git/index.js'
 import type { PRResult, PRGenerationConfig, PRTitleInfo } from './types.js'
@@ -20,7 +20,7 @@ export const createPRGenerator = () => {
 
   const config: PRGenerationConfig = {
     aiManager,
-    outputPath,
+    outputPath: getOutputPath(),
   }
 
   return config
@@ -203,6 +203,7 @@ export const generatePRDescription = async (
  */
 export const savePRToFile = (content: string): string => {
   // Save the file
+  const outputPath = getOutputPath()
   fs.writeFileSync(outputPath, content, 'utf8')
   return outputPath
 }

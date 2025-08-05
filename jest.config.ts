@@ -15,15 +15,25 @@ const config: Config = {
 
   // Transform TypeScript files
   transform: {
-    '^.+\\.ts$': [
+    '^.+\\.ts?$': [
       'ts-jest',
       {
-        useESM: true,
-        tsconfig: 'tsconfig.test.json',
-        moduleNameMapper: {
-          '^(\\.{1,2}/.*)\\.js$': '$1',
+        diagnostics: {
+          ignoreCodes: [1343],
         },
-        isolatedModules: false,
+        astTransformers: {
+          before: [
+            {
+              path: 'node_modules/ts-jest-mock-import-meta', // or, alternatively, 'ts-jest-mock-import-meta' directly, without node_modules.
+              options: {
+                metaObjectReplacement: {
+                  url: ({ fileName }: { fileName: string }) => fileName,
+                  file: ({ fileName }: { fileName: string }) => fileName,
+                },
+              },
+            },
+          ],
+        },
       },
     ],
   },
