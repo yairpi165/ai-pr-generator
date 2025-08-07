@@ -1,16 +1,28 @@
 // Mock external dependencies at module level
+const mockGeneratePRDescription = jest.fn()
+const mockSavePRToFile = jest.fn()
+const mockGetCurrentProvider = jest.fn()
+const mockGetInteractiveInput = jest.fn()
+const mockDisplayOptions = jest.fn()
+const mockDisplayProgress = jest.fn()
+const mockDisplayResult = jest.fn()
+const mockDisplayError = jest.fn()
+const mockHandleOutputOptions = jest.fn()
+const mockLoadReviewersConfig = jest.fn()
+const mockGetOutputPath = jest.fn()
+
 jest.mock('../domain/index.js', () => ({
-  generatePRDescription: jest.fn(),
-  savePRToFile: jest.fn(),
-  getCurrentProvider: jest.fn(),
-  getInteractiveInput: jest.fn(),
-  displayOptions: jest.fn(),
-  displayProgress: jest.fn(),
-  displayResult: jest.fn(),
-  displayError: jest.fn(),
-  handleOutputOptions: jest.fn(),
-  outputPath: '/tmp/pr.md',
-  loadReviewersConfig: jest.fn(),
+  generatePRDescription: mockGeneratePRDescription,
+  savePRToFile: mockSavePRToFile,
+  getCurrentProvider: mockGetCurrentProvider,
+  getInteractiveInput: mockGetInteractiveInput,
+  displayOptions: mockDisplayOptions,
+  displayProgress: mockDisplayProgress,
+  displayResult: mockDisplayResult,
+  displayError: mockDisplayError,
+  handleOutputOptions: mockHandleOutputOptions,
+  loadReviewersConfig: mockLoadReviewersConfig,
+  getOutputPath: mockGetOutputPath,
   UI_CONSTANTS: {
     MESSAGES: {
       WELCOME: '🚀 AI PR Generator',
@@ -20,42 +32,44 @@ jest.mock('../domain/index.js', () => ({
   },
 }))
 
+const mockRunInit = jest.fn()
+const mockRunConfig = jest.fn()
+
 jest.mock('../commands/init.js', () => ({
-  runInit: jest.fn(),
+  runInit: mockRunInit,
 }))
 
 jest.mock('../commands/config.js', () => ({
-  runConfig: jest.fn(),
+  runConfig: mockRunConfig,
 }))
 
-// process.exit is already mocked in setup.ts
-
+// Import after mocking
 import { parseArguments, parseInput, runCLI } from '../cli.js'
-import {
-  generatePRDescription,
-  savePRToFile,
-  getCurrentProvider,
-  getInteractiveInput,
-} from '../domain/index.js'
-import type { PROptions } from '../domain/index.js'
+import type { PROptions } from '../domain/pr/types.js'
 
-const mockGeneratePRDescription = generatePRDescription as jest.MockedFunction<
-  typeof generatePRDescription
->
-const mockSavePRToFile = savePRToFile as jest.MockedFunction<
-  typeof savePRToFile
->
-const mockGetCurrentProvider = getCurrentProvider as jest.MockedFunction<
-  typeof getCurrentProvider
->
-const mockGetInteractiveInput = getInteractiveInput as jest.MockedFunction<
-  typeof getInteractiveInput
->
+// Mock console.log and console.warn
+const mockConsoleLog = jest.fn()
+const mockConsoleWarn = jest.fn()
 
 describe('CLI Module', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    // mockExit is handled in setup.ts
+    // Override console methods
+    console.log = mockConsoleLog
+    console.warn = mockConsoleWarn
+
+    // Set up default mocks
+    mockGetCurrentProvider.mockReturnValue('gemini')
+    mockGetOutputPath.mockReturnValue('/tmp/pr.md')
+    mockSavePRToFile.mockReturnValue('/tmp/pr.md')
+    mockLoadReviewersConfig.mockReturnValue(undefined)
+    mockHandleOutputOptions.mockResolvedValue(undefined)
+    mockDisplayOptions.mockReturnValue(undefined)
+    mockDisplayProgress.mockReturnValue(undefined)
+    mockDisplayResult.mockReturnValue(undefined)
+    mockDisplayError.mockReturnValue(undefined)
+    mockRunInit.mockResolvedValue(undefined)
+    mockRunConfig.mockResolvedValue(undefined)
   })
 
   describe('parseArguments', () => {
@@ -189,45 +203,39 @@ describe('CLI Module', () => {
     })
 
     it('should handle version flag', () => {
-      const originalExit = process.exit
-      const originalConsoleLog = console.log
-      const mockExit = jest.fn()
-      const mockConsoleLog = jest.fn()
-
-      process.exit = mockExit as unknown as typeof process.exit
-      console.log = mockConsoleLog
+      const mockProcessExit = jest
+        .spyOn(process, 'exit')
+        .mockImplementation(() => {
+          throw new Error('process.exit called')
+        })
 
       const args = ['--version']
-      parseArguments(args)
 
+      expect(() => parseArguments(args)).toThrow('process.exit called')
       expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('ai-pr-generator v')
       )
-      expect(mockExit).toHaveBeenCalledWith(0)
+      expect(mockProcessExit).toHaveBeenCalledWith(0)
 
-      process.exit = originalExit
-      console.log = originalConsoleLog
+      mockProcessExit.mockRestore()
     })
 
     it('should handle short version flag', () => {
-      const originalExit = process.exit
-      const originalConsoleLog = console.log
-      const mockExit = jest.fn()
-      const mockConsoleLog = jest.fn()
-
-      process.exit = mockExit as unknown as typeof process.exit
-      console.log = mockConsoleLog
+      const mockProcessExit = jest
+        .spyOn(process, 'exit')
+        .mockImplementation(() => {
+          throw new Error('process.exit called')
+        })
 
       const args = ['-v']
-      parseArguments(args)
 
+      expect(() => parseArguments(args)).toThrow('process.exit called')
       expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('ai-pr-generator v')
       )
-      expect(mockExit).toHaveBeenCalledWith(0)
+      expect(mockProcessExit).toHaveBeenCalledWith(0)
 
-      process.exit = originalExit
-      console.log = originalConsoleLog
+      mockProcessExit.mockRestore()
     })
 
     it('should parse config command correctly', () => {
@@ -311,37 +319,30 @@ describe('CLI Module', () => {
     })
 
     it('should warn about unknown provider', async () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
       const config = { provider: 'unknown-provider', remainingArgs: ['feat'] }
 
       await parseInput(config)
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         'Unknown provider: unknown-provider'
       )
-      consoleSpy.mockRestore()
     })
 
     it('should handle valid provider names', async () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
-
       for (const provider of ['openai', 'gemini', 'GPT', 'Gemini']) {
         const config = { provider, remainingArgs: ['feat'] }
         await parseInput(config)
       }
 
-      expect(consoleSpy).not.toHaveBeenCalled()
-      consoleSpy.mockRestore()
+      expect(mockConsoleWarn).not.toHaveBeenCalled()
     })
 
     it('should log provider when specified', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
       const config = { provider: 'openai', remainingArgs: ['feat'] }
 
       await parseInput(config)
 
-      expect(consoleSpy).toHaveBeenCalledWith('Using provider: openai')
-      consoleSpy.mockRestore()
+      expect(mockConsoleLog).toHaveBeenCalledWith('Using provider: openai')
     })
 
     it('should parse command line args when provided', async () => {
@@ -385,25 +386,23 @@ describe('CLI Module', () => {
     })
 
     it('should handle provider without remainingArgs', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
       const config = { provider: 'openai', remainingArgs: [] }
 
       const result = await parseInput(config)
 
-      expect(consoleSpy).toHaveBeenCalledWith('Using provider: openai')
+      expect(mockConsoleLog).toHaveBeenCalledWith('Using provider: openai')
       expect(result).toEqual(mockPROptions)
       expect(mockGetInteractiveInput).toHaveBeenCalledTimes(1)
-      consoleSpy.mockRestore()
     })
 
     it('should not log provider when not specified', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
       const config = { remainingArgs: ['feat'] }
 
       await parseInput(config)
 
-      expect(consoleSpy).not.toHaveBeenCalled()
-      consoleSpy.mockRestore()
+      expect(mockConsoleLog).not.toHaveBeenCalledWith(
+        expect.stringContaining('Using provider:')
+      )
     })
 
     it('should handle multiple command line arguments', async () => {
@@ -485,9 +484,7 @@ describe('CLI Module', () => {
     }
 
     beforeEach(() => {
-      mockGetCurrentProvider.mockReturnValue('gemini')
       mockGeneratePRDescription.mockResolvedValue(mockPRResult)
-      mockSavePRToFile.mockReturnValue('/tmp/pr.md')
       mockGetInteractiveInput.mockResolvedValue({
         prType: 'feat',
         prTitle: 'Test feature',
@@ -674,16 +671,15 @@ describe('CLI Module', () => {
   })
 
   describe('runCLI function', () => {
-    const { runInit } = require('../commands/init.js')
-    const { runConfig } = require('../commands/config.js')
-
-    const mockRunInit = runInit as jest.MockedFunction<typeof runInit>
-    const mockRunConfig = runConfig as jest.MockedFunction<typeof runConfig>
-
     beforeEach(() => {
       jest.clearAllMocks()
       mockRunInit.mockResolvedValue(undefined)
       mockRunConfig.mockResolvedValue(undefined)
+      mockGeneratePRDescription.mockResolvedValue({
+        title: 'Test title',
+        body: 'Test body',
+        fullDescription: 'Full description',
+      })
     })
 
     it('should call runInit when init command is provided', async () => {
@@ -735,26 +731,57 @@ describe('CLI Module', () => {
       }
 
       mockGeneratePRDescription.mockResolvedValue(mockPRResult)
-      mockSavePRToFile.mockReturnValue('/tmp/pr.md')
-
-      // Mock domain functions needed for full workflow
-      const {
-        handleOutputOptions,
-        loadReviewersConfig,
-      } = require('../domain/index.js')
-      const mockHandleOutputOptions =
-        handleOutputOptions as jest.MockedFunction<typeof handleOutputOptions>
-      const mockLoadReviewersConfig =
-        loadReviewersConfig as jest.MockedFunction<typeof loadReviewersConfig>
-
-      mockHandleOutputOptions.mockResolvedValue(undefined)
-      mockLoadReviewersConfig.mockReturnValue(undefined)
 
       await runCLI()
 
       expect(mockGeneratePRDescription).toHaveBeenCalled()
       expect(mockSavePRToFile).toHaveBeenCalledWith('Full description')
       expect(mockHandleOutputOptions).toHaveBeenCalled()
+
+      process.argv = originalArgv
+    })
+
+    it('should handle CLI errors gracefully', async () => {
+      const originalArgv = process.argv
+      process.argv = ['node', 'cli.js', 'feat', 'Test feature']
+
+      const mockProcessExit = jest
+        .spyOn(process, 'exit')
+        .mockImplementation(() => {
+          throw new Error('process.exit called')
+        })
+
+      const error = new Error('CLI error')
+      mockGeneratePRDescription.mockRejectedValue(error)
+
+      await expect(runCLI()).rejects.toThrow('process.exit called')
+      expect(mockDisplayError).toHaveBeenCalledWith(error)
+      expect(mockProcessExit).toHaveBeenCalledWith(1)
+
+      mockProcessExit.mockRestore()
+      process.argv = originalArgv
+    })
+
+    it('should load reviewers config before processing', async () => {
+      const originalArgv = process.argv
+      process.argv = ['node', 'cli.js', 'feat', 'Test feature']
+
+      await runCLI()
+
+      expect(mockLoadReviewersConfig).toHaveBeenCalled()
+
+      process.argv = originalArgv
+    })
+
+    it('should display welcome message for non-command workflows', async () => {
+      const originalArgv = process.argv
+      process.argv = ['node', 'cli.js', 'feat', 'Test feature']
+
+      await runCLI()
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('🚀 AI PR Generator')
+      )
 
       process.argv = originalArgv
     })

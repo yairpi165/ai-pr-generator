@@ -12,7 +12,7 @@ import {
   displayResult,
   displayError,
   handleOutputOptions,
-  outputPath,
+  getOutputPath,
   loadReviewersConfig,
   UI_CONSTANTS,
 } from './domain/index.js'
@@ -209,7 +209,7 @@ const runCLI = async (): Promise<void> => {
     )
 
     // Handle output options
-    await handleOutputOptions(outputPath, result.title, result.body)
+    await handleOutputOptions(getOutputPath(), result.title, result.body)
   } catch (error) {
     displayError(error instanceof Error ? error : new Error(String(error)))
     process.exit(1)

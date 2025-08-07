@@ -4,6 +4,14 @@ import { execSync } from 'child_process'
 import inquirer from 'inquirer'
 import { runInit } from '../../commands/init.js'
 
+// Mock the paths module
+jest.mock('../../domain/config/paths.js', () => ({
+  getProjectPath: jest.fn(
+    (relativePath: string) => `/test/project/${relativePath}`
+  ),
+  getEnvPath: jest.fn(() => '/test/project/.env'),
+}))
+
 const mockFs = fs as jest.Mocked<typeof fs>
 const mockPath = path as jest.Mocked<typeof path>
 const mockExecSync = execSync as jest.MockedFunction<typeof execSync>
@@ -177,10 +185,11 @@ describe('Init Command', () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
 
       // Mock existing .env and existing reviewers file
-      mockFs.existsSync
-        .mockReturnValueOnce(true) // .env exists
-        .mockReturnValueOnce(true) // reviewers.json.example exists
-        .mockReturnValue(false) // default for other files
+      mockFs.existsSync.mockImplementation((filePath: unknown) => {
+        if (filePath === '/test/project/.env') return true
+        if (filePath === '/test/project/reviewers.json.example') return true
+        return false
+      })
 
       mockExecSync.mockReturnValue(Buffer.from('git version'))
 

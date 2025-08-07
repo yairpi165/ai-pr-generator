@@ -2,11 +2,11 @@
 
 import chalk from 'chalk'
 import fs from 'fs'
-import path from 'path'
 import { execSync } from 'child_process'
 import inquirer from 'inquirer'
 import type { InitOptions } from './types.js'
 import { selectAIModels } from './shared.js'
+import { getEnvPath, getProjectPath } from '../domain/config/paths.js'
 
 /**
  * Check if Node.js is installed and has correct version
@@ -71,7 +71,7 @@ const checkGit = (): void => {
  * Create .env file with API keys
  */
 const createEnvFile = async (options: InitOptions): Promise<void> => {
-  const envPath = path.join(process.cwd(), '.env')
+  const envPath = getEnvPath()
 
   if (fs.existsSync(envPath)) {
     console.log(chalk.green('✅ .env file already exists'))
@@ -241,7 +241,7 @@ const createEnvFile = async (options: InitOptions): Promise<void> => {
  * Create reviewers.json.example if it doesn't exist
  */
 const createReviewersExample = (): void => {
-  const reviewersPath = path.join(process.cwd(), 'reviewers.json.example')
+  const reviewersPath = getProjectPath('reviewers.json.example')
 
   if (fs.existsSync(reviewersPath)) {
     console.log(chalk.green('✅ reviewers.json.example already exists'))
@@ -295,7 +295,7 @@ const createReviewersExample = (): void => {
  * Add .env to .gitignore if not already there
  */
 const updateGitignore = (): void => {
-  const gitignorePath = path.join(process.cwd(), '.gitignore')
+  const gitignorePath = getProjectPath('.gitignore')
 
   if (!fs.existsSync(gitignorePath)) {
     fs.writeFileSync(gitignorePath, '.env\n')

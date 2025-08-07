@@ -1,34 +1,41 @@
+// Mock all dependencies before importing
+const mockGetOutputPath = jest.fn()
+const mockAiConfig = jest.fn()
+const mockGenerateDiff = jest.fn()
+const mockCreateProviderManager = jest.fn()
+
+// Mock config dependencies first to prevent import.meta.url issues
+jest.mock('../../../domain/config/paths.js', () => ({
+  getProjectRoot: jest.fn(() => '/test/project'),
+  getProjectPath: jest.fn((path: string) => `/test/project/${path}`),
+  getEnvPath: jest.fn(() => '/test/project/.env'),
+  getOutputPath: jest.fn(() => '/test/project/pr-description.md'),
+}))
+
+jest.mock('../../../domain/config/index.js', () => ({
+  getOutputPath: mockGetOutputPath,
+  aiConfig: mockAiConfig,
+}))
+
+jest.mock('../../../domain/git/index.js', () => ({
+  generateDiff: mockGenerateDiff,
+}))
+
+jest.mock('../../../domain/ai/index.js', () => ({
+  createProviderManager: mockCreateProviderManager,
+}))
+
+// Import after mocking
 import {
   generatePRDescription,
   savePRToFile,
   getCurrentProvider,
   createPRGenerator,
 } from '../../../domain/pr/generator.js'
-// Remove unused type imports
-
-// Mock dependencies
-// fs is already mocked in setup.ts
-jest.mock('../../../domain/config/index.js', () => ({
-  outputPath: '/path/to/pr-description.md',
-  aiConfig: jest.fn(),
-}))
-jest.mock('../../../domain/git/index.js')
-jest.mock('../../../domain/ai/index.js')
-
 import fs from 'fs'
-import { outputPath, aiConfig } from '../../../domain/config/index.js'
-import { generateDiff } from '../../../domain/git/index.js'
-import { createProviderManager } from '../../../domain/ai/index.js'
 import type { AIConfig, ProviderManager } from '../../../domain/ai/types.js'
 
 const mockFs = fs as jest.Mocked<typeof fs>
-const mockGenerateDiff = generateDiff as jest.MockedFunction<
-  typeof generateDiff
->
-const mockCreateProviderManager = createProviderManager as jest.MockedFunction<
-  typeof createProviderManager
->
-const mockAiConfig = aiConfig as jest.MockedFunction<() => AIConfig>
 
 describe('PR Generator', () => {
   const mockProviderManager: jest.Mocked<ProviderManager> = {
@@ -60,17 +67,20 @@ This PR enhances the feature functionality with improved implementation.
 - Improved code readability`,
   }
 
+  const mockAiConfigValue: AIConfig = { openaiApiKey: 'test-key' }
+
   beforeEach(() => {
     jest.clearAllMocks()
 
     // Setup mocks
+    mockGetOutputPath.mockReturnValue('/test/project/pr-description.md')
+    mockAiConfig.mockReturnValue(mockAiConfigValue)
     mockCreateProviderManager.mockReturnValue(mockProviderManager)
     mockProviderManager.hasAvailableProviders.mockReturnValue(true)
     mockProviderManager.getAvailableProviders.mockReturnValue([
       { name: 'OpenAI', isAvailable: () => true, generateContent: jest.fn() },
     ])
     mockGenerateDiff.mockReturnValue(mockDiff)
-    mockAiConfig.mockReturnValue({ openaiApiKey: 'test-key' })
 
     // Reset fs mock to default behavior
     mockFs.writeFileSync.mockImplementation(() => {})
@@ -324,11 +334,11 @@ This PR enhances the feature functionality with improved implementation.
       const result = savePRToFile(content)
 
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
-        outputPath,
+        '/test/project/pr-description.md',
         content,
         'utf8'
       )
-      expect(result).toBe(outputPath)
+      expect(result).toBe('/test/project/pr-description.md')
     })
 
     it('should handle file writing errors', () => {
@@ -342,8 +352,12 @@ This PR enhances the feature functionality with improved implementation.
     it('should save empty content', () => {
       const result = savePRToFile('')
 
-      expect(mockFs.writeFileSync).toHaveBeenCalledWith(outputPath, '', 'utf8')
-      expect(result).toBe(outputPath)
+      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        '/test/project/pr-description.md',
+        '',
+        'utf8'
+      )
+      expect(result).toBe('/test/project/pr-description.md')
     })
 
     it('should handle large content', () => {
@@ -352,11 +366,11 @@ This PR enhances the feature functionality with improved implementation.
       const result = savePRToFile(largeContent)
 
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
-        outputPath,
+        '/test/project/pr-description.md',
         largeContent,
         'utf8'
       )
-      expect(result).toBe(outputPath)
+      expect(result).toBe('/test/project/pr-description.md')
     })
   })
 

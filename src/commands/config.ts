@@ -2,7 +2,6 @@
 
 import chalk from 'chalk'
 import fs from 'fs'
-import path from 'path'
 import inquirer from 'inquirer'
 import dotenv from 'dotenv'
 import { AI_CONSTANTS } from '../domain/ai/constants.js'
@@ -12,6 +11,7 @@ import {
   confirmReset,
   displayConfigUpdateSuccess,
 } from './shared.js'
+import { getEnvPath } from '../domain/config/paths.js'
 
 interface SettingsOptions {
   action?: 'view' | 'edit' | 'reset'
@@ -32,7 +32,7 @@ interface EnvConfig {
  * Load current environment configuration
  */
 const loadEnvConfig = (): EnvConfig => {
-  const envPath = path.join(process.cwd(), '.env')
+  const envPath = getEnvPath()
 
   if (!fs.existsSync(envPath)) {
     return {}
@@ -48,7 +48,7 @@ const loadEnvConfig = (): EnvConfig => {
  * Save environment configuration
  */
 const saveEnvConfig = (config: EnvConfig): void => {
-  const envPath = path.join(process.cwd(), '.env')
+  const envPath = getEnvPath()
   let envContent = ''
 
   Object.entries(config).forEach(([key, value]) => {
@@ -270,7 +270,7 @@ export const runConfig = async (
       reset: async () => {
         const confirm = await confirmReset()
         if (confirm) {
-          const envPath = path.join(process.cwd(), '.env')
+          const envPath = getEnvPath()
           if (fs.existsSync(envPath)) {
             fs.unlinkSync(envPath)
             console.log(chalk.green('✅ Configuration reset!'))
