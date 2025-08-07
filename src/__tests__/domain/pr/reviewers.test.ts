@@ -1,3 +1,8 @@
+// Mock the paths module to avoid import.meta.url issues
+jest.mock('../../../domain/config/paths.js', () => ({
+  getProjectPath: jest.fn((file: string) => `/test/project/root/${file}`),
+}))
+
 import {
   loadReviewersConfig,
   getReviewers,
@@ -34,7 +39,7 @@ describe('Reviewers Management', () => {
     default: [{ name: 'Default Reviewer', username: 'default' }],
   }
 
-  const mockConfigPath = '/project/reviewers.json'
+  const mockConfigPath = '/test/project/root/reviewers.json'
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -59,10 +64,6 @@ describe('Reviewers Management', () => {
     it('should load reviewers config from default path', () => {
       loadReviewersConfig()
 
-      expect(mockPath.join).toHaveBeenCalledWith(
-        process.cwd(),
-        PR_CONSTANTS.REVIEWERS_FILE
-      )
       expect(mockFs.existsSync).toHaveBeenCalledWith(mockConfigPath)
       expect(mockFs.readFileSync).toHaveBeenCalledWith(mockConfigPath, 'utf8')
       expect(console.log).toHaveBeenCalledWith(

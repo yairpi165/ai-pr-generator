@@ -5,7 +5,7 @@ import type { BitbucketPRData } from '../../config/types.js'
 import { CONFIG_CONSTANTS } from '../../config/constants.js'
 import { UI_CONSTANTS } from '../../ui/constants.js'
 import { getGitRepository } from '../repository.js'
-import { getBitbucketReviewers } from '../../pr/index.js'
+// import { getBitbucketReviewers } from '../../pr/index.js'
 
 /**
  * Bitbucket Repository Information
@@ -30,9 +30,10 @@ export const parseBitbucketRepo = (remoteUrl: string): BitbucketRepoInfo => {
       repository: match[2],
     }
   } else if (remoteUrl.startsWith('https://')) {
+    // https://username@bitbucket.org/workspace/repo.git
     // https://bitbucket.org/workspace/repo.git
     const match = remoteUrl.match(
-      /https:\/\/bitbucket\.org\/([^/]+)\/([^/]+)\.git/
+      /https:\/\/(?:[^@]+@)?bitbucket\.org\/([^/]+)\/([^/]+)\.git/
     )
     if (!match) {
       throw new Error('Invalid Bitbucket HTTPS URL format')
@@ -73,10 +74,10 @@ export const createBitbucketPR = async (
   title: string,
   description: string
 ): Promise<void> => {
-  const reviewers = getBitbucketReviewers()
-  const reviewerUsernames = reviewers
-    .map(r => r.username)
-    .filter((username): username is string => !!username)
+  // const reviewers = getBitbucketReviewers()
+  // const reviewerUsernames = reviewers
+  //   .map(r => r.username)
+  //   .filter((username): username is string => !!username)
 
   const prData: BitbucketPRData = {
     title,
@@ -91,7 +92,7 @@ export const createBitbucketPR = async (
         name: repoInfo.defaultBranch,
       },
     },
-    reviewers: reviewerUsernames.map(username => ({ display_name: username })),
+    // reviewers: reviewerUsernames.length > 0 ? reviewerUsernames.map(username => ({ display_name: username })) : undefined,
   }
 
   const response = await fetch(

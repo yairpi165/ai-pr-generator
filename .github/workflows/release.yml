@@ -99,7 +99,7 @@ jobs:
     needs: determine-version
     runs-on: ubuntu-latest
     outputs:
-      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+      pr_number: ${{ steps.get-pr-number.outputs.pr_number }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -192,6 +192,7 @@ jobs:
           base: main
 
       - name: Get PR number
+        id: get-pr-number
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -219,9 +220,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Debug: Print PR number
+          echo "🔍 Checking PR #${{ needs.create-version-pr.outputs.pr_number }}"
+
           # Check if PR is merged
           pr_state=$(gh pr view ${{ needs.create-version-pr.outputs.pr_number }} --json state,mergedAt --jq '.state')
+          echo "📊 PR State: $pr_state"
+
           pr_merged_at=$(gh pr view ${{ needs.create-version-pr.outputs.pr_number }} --json state,mergedAt --jq '.mergedAt')
+          echo "📊 PR Merged At: $pr_merged_at"
 
           if [ "$pr_state" = "CLOSED" ] && [ "$pr_merged_at" != "null" ]; then
             echo "✅ PR has been merged! Continuing with release..."

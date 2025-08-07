@@ -1,287 +1,497 @@
 import fs from 'fs'
-import path from 'path'
 import inquirer from 'inquirer'
+import dotenv from 'dotenv'
+
+// Mock the paths module
+jest.mock('../../domain/config/paths.js', () => ({
+  getEnvPath: jest.fn(() => '/test/project/.env'),
+}))
+
+// Mock dotenv
+jest.mock('dotenv', () => ({
+  parse: jest.fn(),
+}))
+
+// Mock shared utilities module
+const mockSelectAIModels = jest.fn()
+const mockConfirmReset = jest.fn()
+const mockDisplayConfigUpdateSuccess = jest.fn()
+const mockHandleConfigActions = jest.fn()
+
+jest.mock('../../commands/shared.js', () => ({
+  selectAIModels: mockSelectAIModels,
+  confirmReset: mockConfirmReset,
+  displayConfigUpdateSuccess: mockDisplayConfigUpdateSuccess,
+  handleConfigActions: mockHandleConfigActions,
+}))
+
+// Import after mocking
 import { runConfig } from '../../commands/config.js'
 
-// Mock the modules
-jest.mock('fs')
-jest.mock('path')
-jest.mock('inquirer')
-
 const mockFs = fs as jest.Mocked<typeof fs>
-const mockPath = path as jest.Mocked<typeof path>
 const mockInquirer = inquirer as jest.Mocked<typeof inquirer>
+const mockDotenv = dotenv as jest.Mocked<typeof dotenv>
+
+// Create a new console mock specifically for these tests
+const mockConsoleLog = jest.fn()
 
 describe('Config Command', () => {
-  let consoleLogSpy: jest.SpyInstance
-
   beforeEach(() => {
     jest.clearAllMocks()
+    mockConsoleLog.mockClear()
 
-    // Mock console.log properly
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation()
+    // Override the global console.log mock for this test
+    console.log = mockConsoleLog
 
-    // Default path mocks
-    mockPath.join.mockImplementation((...args) => args.join('/'))
+    // Reset mocks to default implementations
+    mockSelectAIModels.mockResolvedValue({
+      openaiModel: 'gpt-4o-mini',
+      geminiModel: 'gemini-2.0-flash',
+      defaultProvider: '',
+    })
+    mockConfirmReset.mockResolvedValue(false)
+    mockDisplayConfigUpdateSuccess.mockImplementation(displayFn => {
+      mockConsoleLog('✅ Configuration updated!')
+      displayFn()
+    })
 
-    // Default process mocks
-    const mockCwd = jest.fn().mockReturnValue('/test/project')
-    Object.defineProperty(process, 'cwd', {
-      value: mockCwd,
-      writable: true,
+    // Set up handleConfigActions to call the appropriate handlers
+    mockHandleConfigActions.mockImplementation(async (options, handlers) => {
+      if (options.action === 'view' || Object.keys(options).length === 0) {
+        handlers.view()
+        return
+      }
+      if (options.action === 'edit') {
+        await handlers.edit()
+        return
+      }
+      if (options.action === 'reset') {
+        await handlers.reset()
+        return
+      }
+      // Interactive mode
+      const { action } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'action',
+          message: 'What would you like to do?',
+          choices: [
+            { name: '📋 View current configuration', value: 'view' },
+            { name: '✏️  Edit configuration', value: 'edit' },
+            { name: '🔄 Reset configuration', value: 'reset' },
+            { name: '❌ Cancel', value: 'cancel' },
+          ],
+        },
+      ])
+      if (action === 'view') {
+        handlers.view()
+      } else if (action === 'edit') {
+        await handlers.edit()
+      } else if (action === 'reset') {
+        await handlers.reset()
+      }
     })
   })
 
-  afterEach(() => {
-    consoleLogSpy.mockRestore()
-  })
-
-  describe('runConfig function', () => {
-    it('should display current configuration when no action specified', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue(
-        'OPENAI_API_KEY=test-key\nGEMINI_API_KEY=gemini-key\nOPENAI_MODEL=gpt-4o-mini\n'
-      )
-
-      await runConfig()
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('🔧 Current Configuration')
-      )
-    })
-
-    it('should display empty configuration when no .env file exists', async () => {
+  describe('loadEnvConfig functionality', () => {
+    it('should handle non-existing .env file', async () => {
       mockFs.existsSync.mockReturnValue(false)
 
-      await runConfig()
+      await runConfig({ action: 'view' })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('❌ Not configured')
-      )
+      expect(mockFs.existsSync).toHaveBeenCalledWith('/test/project/.env')
+      expect(mockFs.readFileSync).not.toHaveBeenCalled()
     })
 
-    it('should edit configuration when action is edit', async () => {
+    it('should load existing .env file', async () => {
       mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue(
-        'OPENAI_API_KEY=old-key\nGEMINI_API_KEY=old-gemini\n'
+      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
+      mockDotenv.parse.mockReturnValue({
+        OPENAI_API_KEY: 'test-key',
+      })
+
+      await runConfig({ action: 'view' })
+
+      expect(mockFs.readFileSync).toHaveBeenCalledWith(
+        '/test/project/.env',
+        'utf8'
       )
-      mockInquirer.prompt
-        .mockResolvedValueOnce({
-          openaiKey: 'new-key',
-          geminiKey: 'new-gemini',
-        })
-        .mockResolvedValueOnce({
-          openaiModel: 'gpt-4o',
-          geminiModel: 'gemini-2.0-pro',
-          defaultProvider: 'openai',
-        })
-        .mockResolvedValueOnce({ editGitHosting: false })
+      expect(mockDotenv.parse).toHaveBeenCalledWith('OPENAI_API_KEY=test-key\n')
+    })
+  })
 
-      await runConfig({ action: 'edit' })
+  describe('View action', () => {
+    it('should display configuration header', async () => {
+      mockFs.existsSync.mockReturnValue(false)
 
-      // Check that the function completed without throwing
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      await runConfig({ action: 'view' })
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('⚙️  AI Pull Request Generator - Settings')
       )
     })
 
-    it('should reset configuration when action is reset', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockInquirer.prompt.mockResolvedValue({ confirm: true })
-
-      await runConfig({ action: 'reset' })
-
-      expect(mockFs.unlinkSync).toHaveBeenCalledWith('/test/project/.env')
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('✅ Configuration reset!')
-      )
-    })
-
-    it('should not reset configuration when user cancels', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockInquirer.prompt.mockResolvedValue({ confirm: false })
-
-      await runConfig({ action: 'reset' })
-
-      expect(mockFs.unlinkSync).not.toHaveBeenCalled()
-    })
-
-    it('should handle missing .env file during reset', async () => {
+    it('should display current configuration', async () => {
       mockFs.existsSync.mockReturnValue(false)
-      mockInquirer.prompt.mockResolvedValue({ confirm: true })
 
-      await runConfig({ action: 'reset' })
+      await runConfig({ action: 'view' })
 
-      expect(mockFs.unlinkSync).not.toHaveBeenCalled()
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('ℹ️  No configuration file found.')
-      )
-    })
-
-    it('should run interactive mode when no action specified', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
-      mockInquirer.prompt.mockResolvedValue({ action: 'view' })
-
-      await runConfig()
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('🔧 Current Configuration')
       )
     })
 
-    it('should handle filesystem errors gracefully', async () => {
+    it('should show unconfigured status for missing API keys', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+
+      await runConfig({ action: 'view' })
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('❌ Not configured')
+      )
+    })
+
+    it('should show configured status for existing API keys', async () => {
       mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockImplementation(() => {
-        throw new Error('Permission denied')
+      mockFs.readFileSync.mockReturnValue(
+        'OPENAI_API_KEY=test-key\nGEMINI_API_KEY=gemini-key\n'
+      )
+      mockDotenv.parse.mockReturnValue({
+        OPENAI_API_KEY: 'test-key',
+        GEMINI_API_KEY: 'gemini-key',
       })
 
-      await expect(runConfig()).resolves.not.toThrow()
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('❌ Settings failed:')
+      await runConfig({ action: 'view' })
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('✅ Configured')
       )
     })
 
-    it('should handle inquirer errors gracefully', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
-      // Mock the inquirer.prompt call to fail - this will trigger the interactive mode
-      mockInquirer.prompt.mockRejectedValue(new Error('Inquirer failed'))
+    it('should display default models', async () => {
+      mockFs.existsSync.mockReturnValue(false)
 
-      // Pass undefined action to trigger interactive mode at the end of the function
-      await expect(
-        runConfig({ action: undefined as unknown as 'view' | 'edit' | 'reset' })
-      ).resolves.not.toThrow()
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('❌ Settings failed:')
+      await runConfig({ action: 'view' })
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('gpt-4o-mini')
+      )
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('gemini-2.0-flash')
+      )
+    })
+
+    it('should display git hosting status', async () => {
+      mockFs.existsSync.mockReturnValue(true)
+      mockFs.readFileSync.mockReturnValue('GITHUB_TOKEN=gh-token\n')
+      mockDotenv.parse.mockReturnValue({
+        GITHUB_TOKEN: 'gh-token',
+      })
+
+      await runConfig({ action: 'view' })
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringMatching(/GitHub.*✅ Configured/)
       )
     })
   })
 
-  describe('Configuration display', () => {
-    it('should display all configuration sections', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue(
-        'OPENAI_API_KEY=test-key\nGEMINI_API_KEY=gemini-key\nOPENAI_MODEL=gpt-4o-mini\nGEMINI_MODEL=gemini-2.0-flash\nDEFAULT_PROVIDER=openai\nBITBUCKET_EMAIL=test@example.com\nBITBUCKET_TOKEN=bb-token\nGITHUB_TOKEN=gh-token\n'
-      )
-
-      await runConfig({ action: 'view' })
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('🤖 AI Providers:')
-      )
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('🧠 AI Models:')
-      )
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('🔗 Git Hosting:')
-      )
-    })
-
-    it('should show configured status correctly', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue(
-        'OPENAI_API_KEY=test-key\nGEMINI_API_KEY=\nBITBUCKET_EMAIL=test@example.com\nBITBUCKET_TOKEN=bb-token\n'
-      )
-
-      await runConfig({ action: 'view' })
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('OpenAI API Key: ✅ Configured')
-      )
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Gemini API Key: ❌ Not configured')
-      )
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Bitbucket: ✅ Configured')
-      )
-    })
-  })
-
-  describe('Edit Configuration Functions', () => {
-    beforeEach(() => {
-      // Mock fs.writeFileSync for saveEnvConfig tests
-      mockFs.writeFileSync = jest.fn()
-      // Also mock fs.unlinkSync for reset tests
-      mockFs.unlinkSync = jest.fn()
-    })
-
-    it('should save configuration to .env file', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=old-key\n')
-
-      // Mock the edit configuration flow
+  describe('Edit action', () => {
+    it('should handle provider keys editing', async () => {
+      mockFs.existsSync.mockReturnValue(false)
       mockInquirer.prompt
         .mockResolvedValueOnce({ editSection: 'providers' })
         .mockResolvedValueOnce({
-          openaiKey: 'new-openai-key',
-          geminiKey: 'new-gemini-key',
+          openaiKey: 'new-key',
+          geminiKey: 'gemini-key',
         })
         .mockResolvedValueOnce({ editSection: 'save' })
 
       await runConfig({ action: 'edit' })
 
-      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
-        '/test/project/.env',
-        'OPENAI_API_KEY=new-openai-key\nGEMINI_API_KEY=new-gemini-key\n'
+      expect(mockInquirer.prompt).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: 'openaiKey',
+            message: '🔑 OpenAI API Key (press Enter to keep current):',
+          }),
+        ])
       )
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('✅ Configuration saved to .env file')
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('✅ AI Provider keys updated')
       )
     })
 
-    it('should edit AI models configuration', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
-
+    it('should handle models editing', async () => {
+      mockFs.existsSync.mockReturnValue(false)
       mockInquirer.prompt
         .mockResolvedValueOnce({ editSection: 'models' })
-        .mockResolvedValueOnce({
-          openaiModel: 'gpt-4o',
-          geminiModel: 'gemini-2.0-pro',
-          defaultProvider: 'openai',
-        })
         .mockResolvedValueOnce({ editSection: 'save' })
 
       await runConfig({ action: 'edit' })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(mockSelectAIModels).toHaveBeenCalledWith({
+        openaiModel: undefined,
+        geminiModel: undefined,
+        defaultProvider: undefined,
+      })
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('✅ AI Models updated')
       )
     })
 
-    it('should edit AI models with custom models', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
-
+    it('should handle git hosting editing', async () => {
+      mockFs.existsSync.mockReturnValue(false)
       mockInquirer.prompt
-        .mockResolvedValueOnce({ editSection: 'models' })
+        .mockResolvedValueOnce({ editSection: 'hosting' })
         .mockResolvedValueOnce({
-          openaiModel: 'custom',
-          geminiModel: 'custom',
-          defaultProvider: 'gemini',
+          bitbucketEmail: 'test@example.com',
+          bitbucketToken: 'token',
+          githubToken: 'gh-token',
         })
-        .mockResolvedValueOnce({ customOpenaiModel: 'custom-gpt-model' })
-        .mockResolvedValueOnce({ customGeminiModel: 'custom-gemini-model' })
+        .mockResolvedValueOnce({ editSection: 'save' })
+
+      await runConfig({ action: 'edit' })
+
+      expect(mockInquirer.prompt).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: 'bitbucketEmail',
+            type: 'input',
+          }),
+          expect.objectContaining({
+            name: 'githubToken',
+            type: 'password',
+          }),
+        ])
+      )
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('✅ Git Hosting credentials updated')
+      )
+    })
+
+    it('should save configuration to file', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockInquirer.prompt
+        .mockResolvedValueOnce({ editSection: 'providers' })
+        .mockResolvedValueOnce({
+          openaiKey: 'test-key',
+          geminiKey: 'gemini-key',
+        })
         .mockResolvedValueOnce({ editSection: 'save' })
 
       await runConfig({ action: 'edit' })
 
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
         '/test/project/.env',
-        expect.stringContaining('OPENAI_MODEL=custom-gpt-model')
+        expect.stringContaining('OPENAI_API_KEY=test-key')
       )
-      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
-        '/test/project/.env',
-        expect.stringContaining('GEMINI_MODEL=custom-gemini-model')
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('✅ Configuration saved to .env file')
       )
     })
 
-    it('should edit git hosting configuration', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
+    it('should handle cancel without saving', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockInquirer.prompt.mockResolvedValueOnce({ editSection: 'cancel' })
 
+      await runConfig({ action: 'edit' })
+
+      // When cancelled, still saves empty config
+      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        '/test/project/.env',
+        ''
+      )
+    })
+
+    it('should preserve existing keys when editing', async () => {
+      mockFs.existsSync.mockReturnValue(true)
+      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=existing-key\n')
+      mockDotenv.parse.mockReturnValue({
+        OPENAI_API_KEY: 'existing-key',
+      })
       mockInquirer.prompt
+        .mockResolvedValueOnce({ editSection: 'providers' })
+        .mockResolvedValueOnce({
+          openaiKey: 'existing-key',
+          geminiKey: '',
+        })
+        .mockResolvedValueOnce({ editSection: 'save' })
+
+      await runConfig({ action: 'edit' })
+
+      expect(mockInquirer.prompt).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            default: 'existing-key',
+          }),
+        ])
+      )
+    })
+  })
+
+  describe('Reset action', () => {
+    it('should handle reset with confirmation', async () => {
+      mockFs.existsSync.mockReturnValue(true)
+      mockConfirmReset.mockResolvedValue(true)
+
+      await runConfig({ action: 'reset' })
+
+      expect(mockConfirmReset).toHaveBeenCalled()
+      expect(mockFs.unlinkSync).toHaveBeenCalledWith('/test/project/.env')
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('✅ Configuration reset!')
+      )
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('Run "genpr init" to set up again.')
+      )
+    })
+
+    it('should handle reset without confirmation', async () => {
+      mockFs.existsSync.mockReturnValue(true)
+      mockConfirmReset.mockResolvedValue(false)
+
+      await runConfig({ action: 'reset' })
+
+      expect(mockConfirmReset).toHaveBeenCalled()
+      expect(mockFs.unlinkSync).not.toHaveBeenCalled()
+    })
+
+    it('should handle reset when no config exists', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockConfirmReset.mockResolvedValue(true)
+
+      await runConfig({ action: 'reset' })
+
+      expect(mockConfirmReset).toHaveBeenCalled()
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('ℹ️  No configuration file found.')
+      )
+      expect(mockFs.unlinkSync).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Interactive mode', () => {
+    it('should enter interactive mode with empty options', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      // When Object.keys({}).length === 0, it defaults to view action
+
+      await runConfig({})
+
+      // Should default to view when Object.keys({}).length === 0
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('🔧 Current Configuration')
+      )
+    })
+
+    it('should handle interactive mode when no specific action', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockInquirer.prompt
+        .mockResolvedValueOnce({ action: 'edit' })
+        .mockResolvedValueOnce({ editSection: 'save' })
+
+      // Need to trigger interactive mode - use options without action
+      await runConfig({
+        action: undefined as 'view' | 'edit' | 'reset' | undefined,
+      })
+
+      expect(mockInquirer.prompt).toHaveBeenCalledWith([
+        {
+          type: 'list',
+          name: 'action',
+          message: 'What would you like to do?',
+          choices: [
+            { name: '📋 View current configuration', value: 'view' },
+            { name: '✏️  Edit configuration', value: 'edit' },
+            { name: '🔄 Reset configuration', value: 'reset' },
+            { name: '❌ Cancel', value: 'cancel' },
+          ],
+        },
+      ])
+      expect(mockDisplayConfigUpdateSuccess).toHaveBeenCalled()
+    })
+  })
+
+  describe('Error handling', () => {
+    it('should handle file system errors', async () => {
+      mockFs.existsSync.mockImplementation(() => {
+        throw new Error('File system error')
+      })
+
+      await runConfig({ action: 'view' })
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('❌ Settings failed:')
+      )
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('File system error')
+      )
+    })
+
+    it('should handle non-Error exceptions', async () => {
+      mockFs.existsSync.mockImplementation(() => {
+        throw 'String error'
+      })
+
+      await runConfig({ action: 'view' })
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('❌ Settings failed:')
+      )
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('String error')
+      )
+    })
+
+    it('should handle inquirer errors', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockInquirer.prompt.mockRejectedValue(new Error('Inquirer error'))
+
+      await runConfig({ action: 'edit' })
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('❌ Settings failed:')
+      )
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('Inquirer error')
+      )
+    })
+  })
+
+  describe('Configuration file operations', () => {
+    it('should filter out empty values when saving', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockInquirer.prompt
+        .mockResolvedValueOnce({ editSection: 'providers' })
+        .mockResolvedValueOnce({
+          openaiKey: 'test-key',
+          geminiKey: '', // Empty value
+        })
+        .mockResolvedValueOnce({ editSection: 'save' })
+
+      await runConfig({ action: 'edit' })
+
+      const writeCall = mockFs.writeFileSync.mock.calls.find(
+        call => call[0] === '/test/project/.env'
+      )
+      expect(writeCall?.[1]).toContain('OPENAI_API_KEY=test-key')
+      expect(writeCall?.[1]).not.toContain('GEMINI_API_KEY=')
+    })
+
+    it('should handle complex configuration editing', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockSelectAIModels.mockResolvedValue({
+        openaiModel: 'gpt-4o',
+        geminiModel: 'gemini-2.0-pro',
+        defaultProvider: 'openai',
+      })
+      mockInquirer.prompt
+        .mockResolvedValueOnce({ editSection: 'providers' })
+        .mockResolvedValueOnce({
+          openaiKey: 'openai-key',
+          geminiKey: 'gemini-key',
+        })
+        .mockResolvedValueOnce({ editSection: 'models' })
         .mockResolvedValueOnce({ editSection: 'hosting' })
         .mockResolvedValueOnce({
           bitbucketEmail: 'test@example.com',
@@ -292,165 +502,75 @@ describe('Config Command', () => {
 
       await runConfig({ action: 'edit' })
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('✅ Git Hosting credentials updated')
-      )
-    })
-
-    it('should cancel edit configuration and save unchanged config', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
-
-      mockInquirer.prompt.mockResolvedValueOnce({ editSection: 'cancel' })
-
-      await runConfig({ action: 'edit' })
-
-      // When cancelled, it still saves the original unchanged config
+      // The complete configuration should include values from all sections
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
         '/test/project/.env',
-        'OPENAI_API_KEY=test-key\n'
+        expect.stringContaining('OPENAI_API_KEY=openai-key')
       )
+      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        '/test/project/.env',
+        expect.stringContaining('GEMINI_API_KEY=gemini-key')
+      )
+      // Models should be included via the mockSelectAIModels
+      expect(mockSelectAIModels).toHaveBeenCalled()
     })
+  })
 
-    it('should handle interactive mode with view action', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
+  describe('Edge cases', () => {
+    it('should handle empty options object', async () => {
+      mockFs.existsSync.mockReturnValue(false)
 
-      mockInquirer.prompt.mockResolvedValueOnce({ action: 'view' })
+      await runConfig({})
 
-      await runConfig({
-        action: undefined as unknown as 'view' | 'edit' | 'reset',
-      })
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      // Should default to view when Object.keys({}).length === 0
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('🔧 Current Configuration')
       )
     })
 
-    it('should handle interactive mode with edit action', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
+    it('should handle undefined options', async () => {
+      mockFs.existsSync.mockReturnValue(false)
 
-      mockInquirer.prompt
-        .mockResolvedValueOnce({ action: 'edit' })
-        .mockResolvedValueOnce({ editSection: 'save' })
+      await runConfig()
 
-      await runConfig({
-        action: undefined as unknown as 'view' | 'edit' | 'reset',
-      })
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('✅ Configuration updated!')
+      // Should default to view mode since no options and Object.keys(options).length === 0
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('🔧 Current Configuration')
       )
     })
 
-    it('should handle interactive mode with reset action', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
-
-      mockInquirer.prompt
-        .mockResolvedValueOnce({ action: 'reset' })
-        .mockResolvedValueOnce({ confirm: true })
-
-      await runConfig({
-        action: undefined as unknown as 'view' | 'edit' | 'reset',
+    it('should handle file write errors gracefully', async () => {
+      mockFs.existsSync.mockReturnValue(false)
+      mockFs.writeFileSync.mockImplementation(() => {
+        throw new Error('Permission denied')
       })
-
-      expect(mockFs.unlinkSync).toHaveBeenCalledWith('/test/project/.env')
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('✅ Configuration reset!')
-      )
-    })
-
-    it('should handle interactive mode with cancel action', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=test-key\n')
-
-      mockInquirer.prompt.mockResolvedValueOnce({ action: 'cancel' })
-
-      await runConfig({
-        action: undefined as unknown as 'view' | 'edit' | 'reset',
-      })
-
-      // Should not perform any actions when cancelled
-      expect(mockFs.writeFileSync).not.toHaveBeenCalled()
-      expect(mockFs.unlinkSync).not.toHaveBeenCalled()
-    })
-
-    it('should skip saving empty values in configuration', async () => {
-      mockFs.existsSync.mockReturnValue(true)
-      mockFs.readFileSync.mockReturnValue('OPENAI_API_KEY=old-key\n')
-
-      mockInquirer.prompt
-        .mockResolvedValueOnce({ editSection: 'providers' })
-        .mockResolvedValueOnce({
-          openaiKey: 'new-key',
-          geminiKey: '', // Empty value should be skipped
-        })
-        .mockResolvedValueOnce({ editSection: 'save' })
+      mockInquirer.prompt.mockResolvedValueOnce({ editSection: 'save' })
 
       await runConfig({ action: 'edit' })
 
-      expect(mockFs.writeFileSync).toHaveBeenCalledWith(
-        '/test/project/.env',
-        'OPENAI_API_KEY=new-key\n' // Should not include empty geminiKey
-      )
-    })
-
-    it('should handle interactive reset when no .env file exists', async () => {
-      mockFs.existsSync.mockReturnValue(false)
-
-      mockInquirer.prompt
-        .mockResolvedValueOnce({ action: 'reset' })
-        .mockResolvedValueOnce({ confirm: true })
-
-      await runConfig({
-        action: undefined as unknown as 'view' | 'edit' | 'reset',
-      })
-
-      expect(mockFs.unlinkSync).not.toHaveBeenCalled()
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('ℹ️  No configuration file found.')
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('❌ Settings failed:')
       )
     })
   })
 
-  describe('Direct execution', () => {
-    let originalArgv: string[]
+  describe('Direct execution check', () => {
+    it('should detect when file is run directly', () => {
+      const originalArgv = process.argv
+      process.argv = ['node', '/path/to/config.js']
 
-    beforeEach(() => {
-      originalArgv = process.argv
-    })
+      expect(process.argv[1]).toContain('config.js')
 
-    afterEach(() => {
       process.argv = originalArgv
     })
 
-    it('should run config when executed directly', async () => {
-      // Mock process.argv to simulate direct execution
-      process.argv = ['node', '/path/to/config.js']
-      mockFs.existsSync.mockReturnValue(false)
-
-      // Import the module to trigger the direct execution check
-      // We need to use dynamic import and then check if it was called
-      // Since the direct execution is at module level, we'll test the behavior indirectly
-      expect(process.argv[1]).toContain('config.js')
-    })
-
-    it('should not run config when not executed directly', async () => {
-      // Mock process.argv to simulate non-direct execution
+    it('should detect when file is not run directly', () => {
+      const originalArgv = process.argv
       process.argv = ['node', '/path/to/other-file.js']
 
-      // The check should be false, so runConfig should not be called
       expect(process.argv[1]).not.toContain('config.js')
-    })
 
-    it('should handle missing process.argv[1]', async () => {
-      // Mock process.argv with undefined argv[1]
-      process.argv = ['node']
-
-      // Should not crash and should not match config.js
-      expect(process.argv[1]).toBeUndefined()
+      process.argv = originalArgv
     })
   })
 })
