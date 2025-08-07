@@ -403,7 +403,7 @@ describe('Bitbucket Git Hosting', () => {
   })
 
   describe('createBitbucketPR', () => {
-    it('should create PR successfully with reviewers', async () => {
+    it('should create PR successfully', async () => {
       const mockFetch = global.fetch as jest.Mock
       mockFetch.mockResolvedValue({
         ok: true,
@@ -440,10 +440,6 @@ describe('Bitbucket Git Hosting', () => {
                 name: mockRepoInfo.defaultBranch,
               },
             },
-            reviewers: [
-              { display_name: 'reviewer1' },
-              { display_name: 'reviewer2' },
-            ],
           }),
         })
       )
@@ -478,8 +474,7 @@ describe('Bitbucket Git Hosting', () => {
       ).rejects.toThrow('Bitbucket API error: 400 - Bad Request')
     })
 
-    it('should handle empty reviewers list', async () => {
-      mockGetBitbucketReviewers.mockReturnValue([])
+    it('should include basic PR data without reviewers', async () => {
       const mockFetch = global.fetch as jest.Mock
       mockFetch.mockResolvedValue({
         ok: true,
@@ -496,33 +491,11 @@ describe('Bitbucket Git Hosting', () => {
       )
 
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(callBody.reviewers).toEqual([])
-    })
-
-    it('should filter out reviewers without usernames', async () => {
-      mockGetBitbucketReviewers.mockReturnValue([
-        { username: 'reviewer1', name: 'Reviewer One' },
-        { username: '', name: 'Reviewer Two' },
-        { username: undefined, name: 'Reviewer Four' },
-      ])
-
-      const mockFetch = global.fetch as jest.Mock
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ id: 123 }),
-        text: jest.fn().mockResolvedValue(''),
-      })
-
-      await createBitbucketPR(
-        mockRepoInfo,
-        mockBitbucketInfo,
-        mockCredentials,
-        'Test PR Title',
-        'Test PR Description'
-      )
-
-      const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(callBody.reviewers).toEqual([{ display_name: 'reviewer1' }])
+      expect(callBody.title).toBe('Test PR Title')
+      expect(callBody.description).toBe('Test PR Description')
+      expect(callBody.source.branch.name).toBe(mockRepoInfo.currentBranch)
+      expect(callBody.destination.branch.name).toBe(mockRepoInfo.defaultBranch)
+      expect(callBody.reviewers).toBeUndefined() // Reviewers functionality is currently commented out
     })
   })
 

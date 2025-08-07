@@ -1,4 +1,3 @@
-import path from 'path'
 import fs from 'fs'
 import { PR_CONSTANTS } from './constants.js'
 import type { GitPlatform } from '../git/types.js'

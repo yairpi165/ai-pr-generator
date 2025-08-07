@@ -28,7 +28,6 @@ const config: Config = {
               options: {
                 metaObjectReplacement: {
                   url: ({ fileName }: { fileName: string }) => fileName,
-                  file: ({ fileName }: { fileName: string }) => fileName,
                 },
               },
             },

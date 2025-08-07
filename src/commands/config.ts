@@ -2,7 +2,6 @@
 
 import chalk from 'chalk'
 import fs from 'fs'
-import path from 'path'
 import inquirer from 'inquirer'
 import dotenv from 'dotenv'
 import { AI_CONSTANTS } from '../domain/ai/constants.js'

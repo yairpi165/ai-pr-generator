@@ -185,7 +185,7 @@ describe('Init Command', () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
 
       // Mock existing .env and existing reviewers file
-      mockFs.existsSync.mockImplementation((filePath: any) => {
+      mockFs.existsSync.mockImplementation((filePath: unknown) => {
         if (filePath === '/test/project/.env') return true
         if (filePath === '/test/project/reviewers.json.example') return true
         return false
