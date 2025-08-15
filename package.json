@@ -11,7 +11,6 @@
   "scripts": {
     "build": "tsc",
     "verify-build": "node scripts/verify-build.js",
-    "postinstall": "tsc && node scripts/verify-build.js",
     "start": "node dist/cli.js",
     "dev": "tsc -w",
     "dev:watch": "npm run build --watch",
