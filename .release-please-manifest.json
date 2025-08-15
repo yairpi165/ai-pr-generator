@@ -1,18 +1,3 @@
 {
-  "release-type": "node",
-  "packages": {
-    ".": {
-      "release-type": "node",
-      "package-name": "ai-pr-generator",
-      "changelog-sections": [
-        { "type": "feat", "section": "Features" },
-        { "type": "fix", "section": "Bug Fixes" },
-        { "type": "docs", "section": "Documentation" },
-        { "type": "refactor", "section": "Code Refactoring" },
-        { "type": "chore", "section": "Miscellaneous", "hidden": false }
-      ]
-    }
-  },
-  "pull-request-title-pattern": "chore(release): release ${version}",
-  "include-v-in-tag": true
+  ".": "0.0.0"
 }
