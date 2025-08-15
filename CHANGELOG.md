@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/yairpi165/ai-pr-generator/compare/ai-pr-generator-v1.1.0...ai-pr-generator-v1.2.0) (2025-08-15)
+
+
+### Features
+
+* finalize release configuration setup ([87168b9](https://github.com/yairpi165/ai-pr-generator/commit/87168b998229219d65af7e84891c7a2086f35b33))
+
+
+### Bug Fixes
+
+* change publish workflow to trigger on tag creation ([71670e9](https://github.com/yairpi165/ai-pr-generator/commit/71670e909b756e8ba0a7ac2ea71f4ffde7901bf9))
+* change release workflow to manual trigger only ([8dddeb6](https://github.com/yairpi165/ai-pr-generator/commit/8dddeb676aa0362dab67b53ef9225a127d504fed))
+* configure release workflow to run automatically on push ([fee29a1](https://github.com/yairpi165/ai-pr-generator/commit/fee29a1759a8680bf02e2951f7d96cc371488366))
+
+
+### Miscellaneous
+
+* **release:** release 1.1.0 ([acdf3e6](https://github.com/yairpi165/ai-pr-generator/commit/acdf3e6b726207873b99f1c7bf73904d871fcce9))
+* **release:** release 1.1.0 ([c5bc3ed](https://github.com/yairpi165/ai-pr-generator/commit/c5bc3ed93850622de348d49639829a3c2d640171))
+
 ## [1.1.0](https://github.com/yairpi165/ai-pr-generator/compare/ai-pr-generator-v1.0.0...ai-pr-generator-v1.1.0) (2025-08-15)
 
 
