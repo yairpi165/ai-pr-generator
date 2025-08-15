@@ -1,6 +1,6 @@
 {
   "name": "ai-pr-generator",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "description": "Generate beautiful, structured pull request descriptions using AI",
   "main": "dist/cli.js",
   "type": "module",
