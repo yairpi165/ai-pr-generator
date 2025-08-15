@@ -68,6 +68,8 @@
     "openai": "^4.104.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@types/clipboardy": "^2.0.4",
     "@types/inquirer": "^9.0.8",
     "@types/jest": "^30.0.0",
