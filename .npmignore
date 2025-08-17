@@ -55,4 +55,6 @@ npm-debug.log*
 *.temp
 
 # Test files
-test-install.sh 
+test-install.sh
+.release-please-manifest.json
+release-please-config.json
