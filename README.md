@@ -96,24 +96,6 @@ Use `genpr config` to:
 - **Edit** API keys, models, and preferences
 - **Reset** all configuration and start fresh
 
-### Environment Variables
-The tool uses these environment variables (in `.env`):
-```bash
-# AI Providers
-OPENAI_API_KEY=your_openai_key
-GEMINI_API_KEY=your_gemini_key
-
-# AI Models
-OPENAI_MODEL=gpt-4o-mini  # Options: gpt-4o-mini, gpt-4o, gpt-4-turbo, or custom
-GEMINI_MODEL=gemini-2.0-flash  # Options: gemini-2.0-flash, gemini-2.0-pro, gemini-1.5-pro, or custom
-DEFAULT_PROVIDER=openai  # Options: openai, gemini, or empty for auto-select
-
-# Git Hosting (Optional)
-BITBUCKET_EMAIL=your_email
-BITBUCKET_TOKEN=your_token
-GITHUB_TOKEN=your_token
-```
-
 ## 🎯 Usage Examples
 
 ### Basic Usage
